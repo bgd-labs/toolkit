@@ -112,7 +112,9 @@ const awaitableExec = util.promisify(exec);
       content,
     );
   }
-  const files = await fs.readdir(path.join(process.cwd(), `src/abis`));
+  const files = (await fs.readdir(path.join(process.cwd(), `src/abis`)))
+    .filter((file) => file !== "index.ts")
+    .sort((a, b) => a.localeCompare(b));
   await fs.writeFile(
     path.join(process.cwd(), `src/abis/index.ts`),
     prefixWithGeneratedWarning(
