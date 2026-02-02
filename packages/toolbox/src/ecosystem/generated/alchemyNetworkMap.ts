@@ -44,6 +44,7 @@ export const alchemyNetworkMap = {
   2741: "abstract-mainnet",
   3636: "botanix-testnet",
   3637: "botanix-mainnet",
+  4114: "citrea-mainnet",
   4157: "crossfi-testnet",
   4158: "crossfi-mainnet",
   4326: "megaeth-mainnet",
@@ -119,5 +120,5 @@ export const alchemyNetworkMap = {
   999999999: "zora-sepolia",
   2030232745: "lumia-beam",
   3448148188: "tron-testnet",
-  "null": "aptos-testnet"
+  "null": "sui-testnet"
 } as const;
