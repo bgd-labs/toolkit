@@ -1,28 +1,64 @@
-# BGD Toolbox repo
+# BGD Toolkit
 
-This repository tries to slowly resolve two big problems that we currently have with bgd projects.
+A TypeScript monorepo providing tools and utilities for interacting with Aave governance and DeFi protocols.
 
-## Visibility
+## Packages
 
-Most projects we have are developed by small internal teams at bgd and only touched by others on the surface.
-This leads to ppl always reinventing the wheel as they are simply not aware that certain tooling **already exists**.
+- **[@bgd-labs/toolbox](./packages/toolbox)** - Core library with utilities for Aave ecosystem development, including ABIs, address book integration, governance operations, and testing tools
+- **[@bgd-labs/cli](./packages/cli)** - Command-line interface for interacting with Aave protocols and governance
 
-Another less significant problem is that while a lot of ppl in the ecosystem know about bgd, noone uses or contributes to our more generic tooling as noone even knowns they exist.
-Therefore this project ships with docs that are meant to be maintained for "all things bgd".
+## Apps
 
-## Consolidation
+- **[docs](./apps/docs)** - Centralized documentation for BGD Labs projects
 
-This is a problem that directly stems from the lack of visibility.
-Currently we have the same tooling in x projects, and for some things like e.g. pool and ray math it is "common practice" to "just copy the code where it's needed", because we never even published it anywhere.
-Therefore the goal of the `@bgd-labs/toolbox` project is to consolidate a lot of the tooling we currently have, including, but not limited to:
+## Getting Started
 
-- `@bgd-labs/js-utils`
-- `@bgd-labs/aave-cli` (already has some crossover with utils)
-- `seatbelt-gov-v3` (already has some crossover with the cli)
-- `catapulta-verify`
-- `v3-governance-cache` (big crossover with cli & seatbelt)
+This monorepo uses:
 
-Further goals would be to extract some of the generator logic of `@bgd-labs/aave-address-book` as it's useful in other projects as well.
-Address book itself we might want to move to `aave-dao` scope and either deprecate or mirror on our side.
+- [pnpm](https://pnpm.io/) for package management
+- [Turbo](https://turbo.build/) for build orchestration
+- [Changesets](https://github.com/changesets/changesets) for versioning and publishing
 
-I'm not so familiar with permissions book, but might make sense to consolidate as well or at least parts of it.
+### Prerequisites
+
+- Node.js >=22
+- pnpm 10.5.2+
+
+### Installation
+
+```bash
+pnpm install
+```
+
+### Development
+
+```bash
+# Run all packages in dev mode
+pnpm dev
+
+# Build all packages
+pnpm build
+
+# Run tests
+pnpm test
+
+# Lint code
+pnpm lint
+```
+
+## Publishing
+
+```bash
+# Create a changeset
+pnpm changeset
+
+# Version packages
+pnpm version-packages
+
+# Publish to npm
+pnpm release
+```
+
+## License
+
+MIT
