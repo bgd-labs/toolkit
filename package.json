@@ -19,7 +19,7 @@
   "engines": {
     "node": ">=22"
   },
-  "name": "toolbox",
+  "name": "toolkit",
   "packageManager": "pnpm@10.5.2",
   "workspaces": [
     "apps/*",
