@@ -2,4 +2,4 @@
 "@bgd-labs/toolbox": patch
 ---
 
-Differentiate svr feeds.
+Differentiate svr feeds into AAVE SVR and SVR.
