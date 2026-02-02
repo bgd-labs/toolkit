@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.8
+
+### Patch Changes
+
+- 415e39d: Differentiate svr feeds into AAVE SVR and SVR.
+
 ## 0.2.7
 
 ### Patch Changes
