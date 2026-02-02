@@ -33,13 +33,13 @@ const contracts = [
   "node_modules/@bgd-labs/solidity-utils/src/contracts/access-control/interfaces/IWithGuardian.sol",
   "node_modules/@aave-dao/aave-umbrella/src/contracts/rewards/interfaces/IRewardsDistributor.sol",
   "node_modules/@safe-global/safe-deployments/dist/assets/v1.5.0/safe.json",
-  "node_modules/@bgd-labs/aave-capo/src/interfaces/ICLSynchronicityPriceAdapter.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/CLRatePriceCapAdapter.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/CLSynchronicityPriceAdapterBaseToPeg.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/CLSynchronicityPriceAdapterPegToBase.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/PendlePriceCapAdapter.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/PriceCapAdapterBase.sol",
-  "node_modules/@bgd-labs/aave-capo/src/contracts/PriceCapAdapterStable.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/interfaces/ICLSynchronicityPriceAdapter.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/CLRatePriceCapAdapter.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/CLSynchronicityPriceAdapterBaseToPeg.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/CLSynchronicityPriceAdapterPegToBase.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PendlePriceCapAdapter.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PriceCapAdapterBase.sol",
+  "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PriceCapAdapterStable.sol",
 ];
 
 const extractFileName = (input: string) => {

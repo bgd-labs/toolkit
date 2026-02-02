@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import { zeroAddress, type Address } from "viem";
 import { ChainId } from "../ecosystem/chainIds";
 import { writeFileSync } from "node:fs";
 import { prefixWithGeneratedWarning } from "./common";
@@ -33,6 +33,7 @@ const chainToJson = {
       return response.json() as unknown as {
         contractAddress: Address;
         proxyAddress: Address;
+        path: string;
         // seems to be always svr
         secondaryProxyAddress?: Address;
         decimals: number;
@@ -42,15 +43,25 @@ const chainToJson = {
   );
   const formattedFeeds = Object.keys(chainToJson).reduce(
     (acc, key, ix) => {
-      acc[key as unknown as number] = feeds[ix].map((f) => ({
-        contractAddress: f.contractAddress,
-        proxyAddress: f.proxyAddress,
-        decimals: f.decimals,
-        name: f.name,
-        ...(f.secondaryProxyAddress
-          ? { secondaryProxyAddress: f.secondaryProxyAddress }
-          : {}),
-      }));
+      acc[key as unknown as number] = feeds[ix]
+        .map((f) => {
+          let name = f.name;
+          if (/.*-shared-svr/.test(f.path)) {
+            name = `SVR ${name}`;
+          } else if (/.*-svr/.test(f.path)) {
+            name = `AAVE SVR ${name}`;
+          }
+          return {
+            contractAddress: f.contractAddress,
+            proxyAddress: f.proxyAddress,
+            decimals: f.decimals,
+            name: name,
+            ...(f.secondaryProxyAddress
+              ? { secondaryProxyAddress: f.secondaryProxyAddress }
+              : {}),
+          };
+        })
+        .filter((feed) => feed.contractAddress !== zeroAddress);
       return acc;
     },
     {} as Record<

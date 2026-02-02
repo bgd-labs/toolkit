@@ -4,6 +4,10 @@ export const blockscoutExplorers = {
     api: "https://eth.blockscout.com/api",
     explorer: "https://eth.blockscout.com/"
   },
+  5: {
+    api: "https://eth-goerli.blockscout.com/api",
+    explorer: "https://eth-goerli.blockscout.com/"
+  },
   7: {
     api: "https://thaichain.org/api",
     explorer: "https://thaichain.org"
@@ -91,6 +95,10 @@ export const blockscoutExplorers = {
   88: {
     api: "https://viction.blockscout.com/api",
     explorer: "https://viction.blockscout.com/"
+  },
+  89: {
+    api: "https://viction-testnet.blockscout.com/api",
+    explorer: "https://viction-testnet.blockscout.com/"
   },
   94: {
     api: "https://explorer.swissdlt.ch/api",
@@ -324,6 +332,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.sx.technology/api",
     explorer: "https://explorer.sx.technology/"
   },
+  420: {
+    api: "https://optimism-goerli.blockscout.com/api",
+    explorer: "https://optimism-goerli.blockscout.com/"
+  },
   426: {
     api: "https://clvscan.com/api",
     explorer: "https://clvscan.com/"
@@ -347,6 +359,10 @@ export const blockscoutExplorers = {
   484: {
     api: "https://blocksurety.net/api",
     explorer: "https://blocksurety.net/"
+  },
+  488: {
+    api: "https://blackfortscan.com/api",
+    explorer: "https://blackfortscan.com/"
   },
   528: {
     api: "https://egonscan.com/api",
@@ -400,10 +416,6 @@ export const blockscoutExplorers = {
     api: "https://explorer-endurance.fusionist.io/api",
     explorer: "https://explorer-endurance.fusionist.io/"
   },
-  654: {
-    api: "https://explorer.kalichain.com/api",
-    explorer: "https://explorer.kalichain.com/"
-  },
   690: {
     api: "https://explorer.redstone.xyz/api",
     explorer: "https://explorer.redstone.xyz/"
@@ -433,8 +445,8 @@ export const blockscoutExplorers = {
     explorer: "https://ocean.ftnscan.com/"
   },
   766: {
-    api: "https://scan.qom.one/api",
-    explorer: "https://scan.qom.one/"
+    api: "https://scan.qom.network/api",
+    explorer: "https://scan.qom.network/"
   },
   810: {
     api: "https://explorer.testnet.haven1.org/api",
@@ -511,6 +523,10 @@ export const blockscoutExplorers = {
   1075: {
     api: "https://explorer.evm.testnet.iotaledger.net/api",
     explorer: "https://explorer.evm.testnet.iotaledger.net/"
+  },
+  1076: {
+    api: "https://explorer.evm.testnet.iota.cafe/api",
+    explorer: "https://explorer.evm.testnet.iota.cafe/"
   },
   1081: {
     api: "https://explorer.mainnetloop.com/api",
@@ -608,6 +624,10 @@ export const blockscoutExplorers = {
     api: "https://openzk.calderaexplorer.xyz/api",
     explorer: "https://openzk.calderaexplorer.xyz/"
   },
+  1359: {
+    api: "https://scan.ispay.vip/api",
+    explorer: "https://scan.ispay.vip/"
+  },
   1370: {
     api: "https://ramascan.com/api",
     explorer: "https://ramascan.com/"
@@ -631,10 +651,6 @@ export const blockscoutExplorers = {
   1490: {
     api: "https://explorer-new.vitruveo.xyz/api",
     explorer: "https://explorer-new.vitruveo.xyz/"
-  },
-  1500: {
-    api: "https://arbitrum-sepolia.blockscout.com/api",
-    explorer: "https://arbitrum-sepolia.blockscout.com/"
   },
   1501: {
     api: "https://scan-canary.bevm.io/api",
@@ -684,6 +700,10 @@ export const blockscoutExplorers = {
     api: "https://scan.dbkchain.io/api",
     explorer: "https://scan.dbkchain.io/"
   },
+  1650: {
+    api: "https://scan.iic-blockchain.com/api",
+    explorer: "https://scan.iic-blockchain.com/"
+  },
   1687: {
     api: "https://sepolia-testnet-explorer.mintchain.io/api",
     explorer: "https://sepolia-testnet-explorer.mintchain.io/"
@@ -712,6 +732,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.metall2.com/api",
     explorer: "https://explorer.metall2.com/"
   },
+  1805: {
+    api: "https://scan.inceptionchain.io/api",
+    explorer: "https://scan.inceptionchain.io/"
+  },
   1811: {
     api: "https://testnet.lif3scout.com/api",
     explorer: "https://testnet.lif3scout.com"
@@ -739,6 +763,10 @@ export const blockscoutExplorers = {
   1908: {
     api: "https://testnet.bitciexplorer.com/api",
     explorer: "https://testnet.bitciexplorer.com"
+  },
+  1919: {
+    api: "https://explorer.turkchain1919.com/api",
+    explorer: "https://explorer.turkchain1919.com/"
   },
   1923: {
     api: "https://explorer.swellnetwork.io/api",
@@ -823,6 +851,10 @@ export const blockscoutExplorers = {
   2340: {
     api: "https://blockscout.atleta.network/api",
     explorer: "https://blockscout.atleta.network/"
+  },
+  2366: {
+    api: "https://kitescan.ai/api",
+    explorer: "https://kitescan.ai/"
   },
   2368: {
     api: "https://testnet.kitescan.ai/api",
@@ -952,6 +984,14 @@ export const blockscoutExplorers = {
     api: "https://testnet.clishachain.com/api",
     explorer: "https://testnet.clishachain.com/"
   },
+  3941: {
+    api: "https://nexus-staging-testnet.blockscout.com/api",
+    explorer: "https://nexus-staging-testnet.blockscout.com/"
+  },
+  3945: {
+    api: "https://nexus.testnet.blockscout.com/api",
+    explorer: "https://nexus.testnet.blockscout.com/"
+  },
   4024: {
     api: "https://testnet.explorer.tonsquare.io/api",
     explorer: "https://testnet.explorer.tonsquare.io/"
@@ -984,6 +1024,10 @@ export const blockscoutExplorers = {
     api: "https://bethscan.org/api",
     explorer: "https://bethscan.org/"
   },
+  4399: {
+    api: "https://explorer-evm.cysic.xyz/api",
+    explorer: "https://explorer-evm.cysic.xyz/"
+  },
   4460: {
     api: "https://testnet-explorer.orderly.org/api",
     explorer: "https://testnet-explorer.orderly.org/"
@@ -1012,21 +1056,17 @@ export const blockscoutExplorers = {
     api: "https://appchaintestnet.explorer.caldera.xyz/api",
     explorer: "https://appchaintestnet.explorer.caldera.xyz/"
   },
-  4777: {
-    api: "https://blackfort-testnet.blockscout.com/api",
-    explorer: "https://blackfort-testnet.blockscout.com/"
-  },
   4801: {
     api: "https://worldchain-sepolia.explorer.alchemy.com/api",
     explorer: "https://worldchain-sepolia.explorer.alchemy.com"
   },
+  4888: {
+    api: "https://testnet.blackfortscan.com/api",
+    explorer: "https://testnet.blackfortscan.com/"
+  },
   4913: {
     api: "https://oev.explorer.api3.org/api",
     explorer: "https://oev.explorer.api3.org/"
-  },
-  4999: {
-    api: "https://blackfort.blockscout.com/api",
-    explorer: "https://blackfort.blockscout.com/"
   },
   5002: {
     api: "https://evmexplorer.treasurenet.io/api",
@@ -1086,7 +1126,7 @@ export const blockscoutExplorers = {
   },
   5888: {
     api: "https://blockscout.mantrascan.io/api",
-    explorer: "https://blockscout.mantrascan.io"
+    explorer: "https://blockscout.mantrascan.io/"
   },
   5920: {
     api: "https://chain-20.evm-testnet-blockscout.chainweb.com/api",
@@ -1112,9 +1152,21 @@ export const blockscoutExplorers = {
     api: "https://explorer.ande.network/api",
     explorer: "https://explorer.ande.network/"
   },
+  6252: {
+    api: "https://sandchain-explorer.caldera.xyz/api",
+    explorer: "https://sandchain-explorer.caldera.xyz/"
+  },
   6278: {
     api: "https://explore.steamexchange.io/api",
     explorer: "https://explore.steamexchange.io/"
+  },
+  6342: {
+    api: "https://megaeth-testnet.blockscout.com/api",
+    explorer: "https://megaeth-testnet.blockscout.com/"
+  },
+  6343: {
+    api: "https://megaeth-testnet-v2.blockscout.com/api",
+    explorer: "https://megaeth-testnet-v2.blockscout.com/"
   },
   6398: {
     api: "https://scan.testnet.everclear.org/api",
@@ -1156,6 +1208,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.bit-rock.io/api",
     explorer: "https://explorer.bit-rock.io"
   },
+  7282: {
+    api: "https://savscanner.io/api",
+    explorer: "https://savscanner.io/"
+  },
   7332: {
     api: "https://eon-explorer.horizenlabs.io/api",
     explorer: "https://eon-explorer.horizenlabs.io/"
@@ -1183,6 +1239,10 @@ export const blockscoutExplorers = {
   7979: {
     api: "https://doscan.io/api",
     explorer: "https://doscan.io/"
+  },
+  8021: {
+    api: "https://numine.blockscout.com/api",
+    explorer: "https://numine.blockscout.com/"
   },
   8131: {
     api: "https://testnet-qng.qitmeer.io/api",
@@ -1284,6 +1344,10 @@ export const blockscoutExplorers = {
     api: "https://explorer-reticulum.galactica.com/api",
     explorer: "https://explorer-reticulum.galactica.com/"
   },
+  9369: {
+    api: "https://zscan.live/api",
+    explorer: "https://zscan.live/"
+  },
   9372: {
     api: "https://explorer.testnet.oasys.games/api",
     explorer: "https://explorer.testnet.oasys.games/"
@@ -1327,6 +1391,10 @@ export const blockscoutExplorers = {
   10200: {
     api: "https://gnosis-chiado.blockscout.com/api",
     explorer: "https://gnosis-chiado.blockscout.com/"
+  },
+  10218: {
+    api: "https://sepolia.tea.xyz/api",
+    explorer: "https://sepolia.tea.xyz/"
   },
   10245: {
     api: "https://capxscan.com/api",
@@ -1480,6 +1548,10 @@ export const blockscoutExplorers = {
     api: "https://rollup-b.explorer.testnet.compose.network/api",
     explorer: "https://rollup-b.explorer.testnet.compose.network/"
   },
+  22469: {
+    api: "https://explorer-sb.teknix.dev/api",
+    explorer: "https://explorer-sb.teknix.dev/"
+  },
   22776: {
     api: "https://explorer.mapprotocol.io/api",
     explorer: "https://explorer.mapprotocol.io/"
@@ -1620,6 +1692,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.pretzel.build/api",
     explorer: "https://explorer.pretzel.build/"
   },
+  51010: {
+    api: "https://metabased-stratos.explorer.alchemy.com/api",
+    explorer: "https://metabased-stratos.explorer.alchemy.com/"
+  },
   51012: {
     api: "https://explorer.plutochain.io/api",
     explorer: "https://explorer.plutochain.io/"
@@ -1720,9 +1796,17 @@ export const blockscoutExplorers = {
     api: "https://explorer.creatorchain.io/api",
     explorer: "https://explorer.creatorchain.io/"
   },
+  66666: {
+    api: "https://explorer.unikium.com/api",
+    explorer: "https://explorer.unikium.com/"
+  },
   67412: {
     api: "https://explorer.itachain.io/api",
     explorer: "https://explorer.itachain.io/"
+  },
+  69420: {
+    api: "https://alchemy-sepolia.explorer.alchemy.com/api",
+    explorer: "https://alchemy-sepolia.explorer.alchemy.com/"
   },
   70700: {
     api: "https://explorer.apex.proofofplay.com/api",
@@ -1748,6 +1832,10 @@ export const blockscoutExplorers = {
     api: "https://explorer-vanguard.vanarchain.com/api",
     explorer: "https://explorer-vanguard.vanarchain.com/"
   },
+  78651: {
+    api: "https://explorer.testnet.nillion.network/api",
+    explorer: "https://explorer.testnet.nillion.network/"
+  },
   80888: {
     api: "https://explorer.onyx.org/api",
     explorer: "https://explorer.onyx.org/"
@@ -1763,6 +1851,10 @@ export const blockscoutExplorers = {
   83333: {
     api: "https://explorer.ogori.one/api",
     explorer: "https://explorer.ogori.one"
+  },
+  84531: {
+    api: "https://base-goerli.blockscout.com/api",
+    explorer: "https://base-goerli.blockscout.com/"
   },
   84532: {
     api: "https://base-sepolia.blockscout.com/api",
@@ -1811,6 +1903,10 @@ export const blockscoutExplorers = {
   98867: {
     api: "https://testnet-explorer.plumenetwork.xyz/api",
     explorer: "https://testnet-explorer.plumenetwork.xyz/"
+  },
+  98875: {
+    api: "https://explorer.nillion.network/api",
+    explorer: "https://explorer.nillion.network/"
   },
   98985: {
     api: "https://testnet-explorer.superposition.so/api",
@@ -1872,6 +1968,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.form.network/api",
     explorer: "https://explorer.form.network/"
   },
+  133717: {
+    api: "https://explorer.hyperion-testnet.metis.io/api",
+    explorer: "https://explorer.hyperion-testnet.metis.io/"
+  },
   140125: {
     api: "https://explorer.enterprise.testnet.plancknetwork.com/api",
     explorer: "https://explorer.enterprise.testnet.plancknetwork.com/"
@@ -1924,6 +2024,10 @@ export const blockscoutExplorers = {
     api: "https://explorer.evm.hydration.cloud/api",
     explorer: "https://explorer.evm.hydration.cloud/"
   },
+  222888: {
+    api: "https://testnet-scan.mocachain.org/api",
+    explorer: "https://testnet-scan.mocachain.org/"
+  },
   247253: {
     api: "https://explorer-testnet.saakuru.network/api",
     explorer: "https://explorer-testnet.saakuru.network/"
@@ -1939,6 +2043,10 @@ export const blockscoutExplorers = {
   322202: {
     api: "https://scan.parex.network/api",
     explorer: "https://scan.parex.network/"
+  },
+  323432: {
+    api: "https://testnet-explorer.worldmobile.net/api",
+    explorer: "https://testnet-explorer.worldmobile.net/"
   },
   325000: {
     api: "https://basecamp.cloud.blockscout.com/api",
@@ -1959,6 +2067,10 @@ export const blockscoutExplorers = {
   412346: {
     api: "https://explorer-devnet.adventurelayer.xyz/api",
     explorer: "https://explorer-devnet.adventurelayer.xyz/"
+  },
+  421614: {
+    api: "https://arbitrum-sepolia.blockscout.com/api",
+    explorer: "https://arbitrum-sepolia.blockscout.com/"
   },
   444444: {
     api: "https://syndr-l3-sepolia.explorer.caldera.xyz/api",
@@ -2031,6 +2143,10 @@ export const blockscoutExplorers = {
   668668: {
     api: "https://conwai.calderaexplorer.xyz/api",
     explorer: "https://conwai.calderaexplorer.xyz/"
+  },
+  685685: {
+    api: "https://gensyn-testnet.explorer.alchemy.com/api",
+    explorer: "https://gensyn-testnet.explorer.alchemy.com/"
   },
   688688: {
     api: "https://testnet.pharosscan.xyz/api",
@@ -2140,6 +2256,14 @@ export const blockscoutExplorers = {
     api: "https://explorer.rdgx.io/api",
     explorer: "https://explorer.rdgx.io/"
   },
+  5042002: {
+    api: "https://testnet.arcscan.app/api",
+    explorer: "https://testnet.arcscan.app/"
+  },
+  5278000: {
+    api: "https://kaigan.blockscout.com/api",
+    explorer: "https://kaigan.blockscout.com/"
+  },
   5820948: {
     api: "https://onlyscan.info/api",
     explorer: "https://onlyscan.info"
@@ -2191,6 +2315,10 @@ export const blockscoutExplorers = {
   11155931: {
     api: "https://explorer.testnet.riselabs.xyz/api",
     explorer: "https://explorer.testnet.riselabs.xyz/"
+  },
+  12082025: {
+    api: "https://onfascan.io/api",
+    explorer: "https://onfascan.io/"
   },
   13863860: {
     api: "https://symbiosis.calderaexplorer.xyz/api",
@@ -2267,6 +2395,10 @@ export const blockscoutExplorers = {
   666666666: {
     api: "https://explorer.degen.tips/api",
     explorer: "https://explorer.degen.tips/"
+  },
+  686669576: {
+    api: "https://polygon-cdk-stavanger.blockscout.com/api",
+    explorer: "https://polygon-cdk-stavanger.blockscout.com/"
   },
   888888888: {
     api: "https://scan.ancient8.gg/api",
@@ -2352,6 +2484,10 @@ export const blockscoutExplorers = {
     api: "https://elated-tan-skat.explorer.mainnet.skalenodes.com/api",
     explorer: "https://elated-tan-skat.explorer.mainnet.skalenodes.com/"
   },
+  3735928814: {
+    api: "https://eden-testnet.blockscout.com/api",
+    explorer: "https://eden-testnet.blockscout.com/"
+  },
   5447216671: {
     api: "https://hiloscan.io/api",
     explorer: "https://hiloscan.io/"
@@ -2359,10 +2495,6 @@ export const blockscoutExplorers = {
   5565244900: {
     api: "https://testnet.explorer.towns.com/api",
     explorer: "https://testnet.explorer.towns.com/"
-  },
-  8691942025: {
-    api: "https://onfascan.com/api",
-    explorer: "https://onfascan.com/"
   },
   34131050525: {
     api: "https://scan-testnet.hyra.network/api",

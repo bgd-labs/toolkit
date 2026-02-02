@@ -27,6 +27,7 @@ export * from './IWrappedTokenGatewayV3';
 export * from './IEmissionManager';
 export * from './IAggregatorInterface';
 export * from './IPoolAddressesProvider';
+export * from './index';
 export * from './IAToken';
 export * from './Umbrella_IRewardsController';
 export * from './IPool';
