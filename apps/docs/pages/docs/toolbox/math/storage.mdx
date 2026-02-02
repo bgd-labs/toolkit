@@ -1,0 +1,176 @@
+# Storage Slots [Utilities for calculating Solidity storage slots]
+
+When working with Solidity storage, especially for mappings and dynamic arrays, calculating the storage slot manually can be complex. These utilities help you determine the exact storage slot for various Solidity data structures.
+
+## Overview
+
+Solidity uses a deterministic algorithm to calculate storage slots for mappings and dynamic arrays. Understanding and calculating these slots is essential when:
+
+- Reading storage directly via `eth_getStorageAt`
+- Writing tests that manipulate storage
+- Debugging contract state
+- Working with upgradeable contracts
+
+Read more about Solidity storage layout in the [official documentation](https://docs.soliditylang.org/en/latest/internals/layout_in_storage.html).
+
+## Mapping with bytes32 Keys
+
+For mappings with `bytes32` keys, use `getSolidityStorageSlotBytes`:
+
+```ts twoslash
+import { getSolidityStorageSlotBytes } from "@bgd-labs/toolbox";
+
+// mapping(bytes32 => uint256) at slot 0
+const mappingSlot =
+  "0x0000000000000000000000000000000000000000000000000000000000000000";
+const key =
+  "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
+
+const storageSlot = getSolidityStorageSlotBytes(mappingSlot, key);
+// Returns the calculated storage slot for the mapping entry
+```
+
+## Mapping with uint Keys
+
+For mappings with `uint` keys, use `getSolidityStorageSlotUint`:
+
+```ts twoslash
+import { getSolidityStorageSlotUint } from "@bgd-labs/toolbox";
+
+// mapping(uint256 => address) at slot 5
+const mappingSlot = 5n;
+const key = 12345n;
+
+const storageSlot = getSolidityStorageSlotUint(mappingSlot, key);
+// Returns the calculated storage slot
+```
+
+## Mapping with Address Keys
+
+For mappings with `address` keys, use `getSolidityStorageSlotAddress`:
+
+```ts twoslash
+import { getSolidityStorageSlotAddress } from "@bgd-labs/toolbox";
+
+// mapping(address => uint256) balances; at slot 3
+const mappingSlot = 3n;
+const userAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+
+const storageSlot = getSolidityStorageSlotAddress(mappingSlot, userAddress);
+// Returns the storage slot for balances[userAddress]
+```
+
+## Dynamic Arrays
+
+For dynamic arrays, use `getDynamicArraySlot` to calculate the slot for a specific array element:
+
+```ts twoslash
+import { getDynamicArraySlot } from "@bgd-labs/toolbox";
+
+// address[] users; at slot 2
+const arrayBaseSlot = 2n;
+const arrayIndex = 5; // Get 6th element (0-indexed)
+const itemSize = 1; // Each address takes 1 slot
+
+const storageSlot = getDynamicArraySlot(arrayBaseSlot, arrayIndex, itemSize);
+// Returns the storage slot for users[5]
+```
+
+### Multi-slot Items
+
+If your array contains structs or multiple items per element:
+
+```ts twoslash
+import { getDynamicArraySlot } from "@bgd-labs/toolbox";
+
+// struct Data { uint256 a; uint256 b; }
+// Data[] records; at slot 10
+const arrayBaseSlot = 10n;
+const arrayIndex = 3;
+const itemSize = 2; // Each struct takes 2 slots
+
+const storageSlot = getDynamicArraySlot(arrayBaseSlot, arrayIndex, itemSize);
+// Returns the slot for records[3].a
+// records[3].b would be at slot + 1
+```
+
+## Bytes and Strings
+
+For short strings and bytes (up to 31 bytes), use `getBytesValue`:
+
+```ts twoslash
+import { getBytesValue } from "@bgd-labs/toolbox";
+
+const shortString = "Hello";
+const encodedValue = getBytesValue(shortString);
+// Returns the properly encoded value for storage
+// Note: Strings > 31 bytes use a different encoding not yet supported
+```
+
+## Address Conversion
+
+Convert `bytes32` to `address` (useful when reading storage that contains addresses):
+
+```ts twoslash
+import { bytes32ToAddress } from "@bgd-labs/toolbox";
+
+const bytes32Value =
+  "0x000000000000000000000000742d35cc6634c0532925a3b844bc9e7595f0beb";
+const address = bytes32ToAddress(bytes32Value);
+// Returns "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb"
+```
+
+## Example: Reading Mapping Storage
+
+Here's a complete example of reading a balance from a token contract:
+
+```ts
+import { getSolidityStorageSlotAddress, ChainId } from "@bgd-labs/toolbox";
+import { getStorageAt } from "viem/actions";
+import type { Client } from "viem";
+
+// Assume we have a viem client
+declare const client: Client;
+
+// ERC20 balances mapping is typically at slot 0
+const balancesSlot = 0n;
+const userAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+const tokenAddress = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"; // USDC
+
+const storageSlot = getSolidityStorageSlotAddress(balancesSlot, userAddress);
+
+const balance = await getStorageAt(client, {
+  address: tokenAddress,
+  slot: storageSlot,
+});
+
+console.log(`Balance: ${BigInt(balance || "0")}`);
+```
+
+## Limitations
+
+- **Strings > 31 bytes**: Currently only short strings (≤31 bytes) are supported
+- **Nested mappings**: Requires chaining slot calculations
+- **Complex structs**: May need manual calculation for deeply nested structures
+
+## Advanced Usage: Nested Mappings
+
+For nested mappings like `mapping(address => mapping(uint256 => bool))`:
+
+```ts twoslash
+import {
+  getSolidityStorageSlotAddress,
+  getSolidityStorageSlotUint,
+} from "@bgd-labs/toolbox";
+
+// mapping(address => mapping(uint256 => bool)) approvals; at slot 4
+const baseSlot = 4n;
+const owner = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
+const tokenId = 123n;
+
+// First, get the slot for approvals[owner]
+const innerMappingSlot = getSolidityStorageSlotAddress(baseSlot, owner);
+
+// Then, get the slot for approvals[owner][tokenId]
+const finalSlot = getSolidityStorageSlotUint(BigInt(innerMappingSlot), tokenId);
+```

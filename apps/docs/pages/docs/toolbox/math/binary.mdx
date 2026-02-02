@@ -1,0 +1,226 @@
+# Binary [Utilities for binary math operations]
+
+## Overview
+
+In Solidity, it's common practice to encode multiple boolean or small integer values in bitmaps rather than using separate storage slots. This is because Solidity will pack one boolean per byte, while with a bitmap, you can pack one bit per bit, resulting in significant gas savings.
+
+These utilities help with extracting and manipulating bitmap data in JavaScript/TypeScript.
+
+## Bitmaps
+
+Bitmaps use individual bits to represent boolean flags or indexes. The `bitmapToIndexes` function extracts all set (truthy) bit positions from a bitmap.
+
+### Basic Usage
+
+```ts twoslash
+import { bitmapToIndexes } from "@bgd-labs/toolbox";
+
+const bitmap = 0b1011n; // Binary: bits 0, 1, and 3 are set
+const indexes = bitmapToIndexes(bitmap);
+// Returns: [0, 1, 3]
+```
+
+### Practical Example
+
+```ts twoslash
+import { bitmapToIndexes } from "@bgd-labs/toolbox";
+
+// User has enabled reserve IDs 0, 2, and 5 as collateral
+const collateralBitmap = 0b100101n;
+const enabledReserves = bitmapToIndexes(collateralBitmap);
+// Returns: [0, 2, 5]
+
+console.log(`User has ${enabledReserves.length} reserves enabled`);
+```
+
+### Large Bitmaps
+
+Works with bitmaps of any size:
+
+```ts twoslash
+import { bitmapToIndexes } from "@bgd-labs/toolbox";
+
+// 256-bit bitmap (uint256 in Solidity)
+const largeBitmap = (1n << 255n) | (1n << 128n) | 1n;
+const indexes = bitmapToIndexes(largeBitmap);
+// Returns: [0, 128, 255]
+```
+
+## Bit Ranges
+
+When values are tightly packed in Solidity storage slots (like Aave's reserve configuration), you need to extract specific bit ranges. The `getBits` and `setBits` functions handle this efficiently.
+
+### Getting Bits
+
+Extract a range of bits from a number:
+
+```ts twoslash
+import { getBits } from "@bgd-labs/toolbox";
+
+// Extract bits 0-3 (rightmost 4 bits)
+getBits(0b11010110n, 0n, 3n); // Returns: 0b0110n (6)
+
+// Extract bits 4-7
+getBits(0b11010110n, 4n, 7n); // Returns: 0b1101n (13)
+
+// Extract single bit
+getBits(0b11010110n, 5n, 5n); // Returns: 0b1n (1)
+```
+
+### Validation and Edge Cases
+
+The improved `getBits` function includes robust validation:
+
+```ts twoslash
+import { getBits } from "@bgd-labs/toolbox";
+
+// Handles ranges beyond actual bit length
+getBits(0b1111n, 0n, 100n); // Returns: 0b1111n (clamped to actual length)
+
+// Returns 0 for completely out-of-range queries
+getBits(0b1111n, 100n, 200n); // Returns: 0n
+
+// Fast path for zero
+getBits(0n, 0n, 10n); // Returns: 0n
+
+// Validation errors
+try {
+  getBits(-5n, 0n, 5n); // Error: uint256 must be non-negative
+} catch (e) {
+  console.error((e as Error).message);
+}
+
+try {
+  getBits(100n, 5n, 2n); // Error: startBit must be <= endBit
+} catch (e) {
+  console.error((e as Error).message);
+}
+```
+
+### Setting Bits
+
+Replace a range of bits with a new value:
+
+```ts twoslash
+import { setBits } from "@bgd-labs/toolbox";
+
+// Set bits 0-3 to binary 0101 (5)
+setBits(0b11111111n, 0n, 3n, 0b0101n); // Returns: 0b11110101n
+
+// Clear bits (set to 0)
+setBits(0b1111n, 0n, 1n, 0n); // Returns: 0b1100n
+
+// Set a single bit
+setBits(0b1000n, 2n, 2n, 1n); // Returns: 0b1100n
+```
+
+### Practical Example: Aave Reserve Configuration
+
+Aave stores reserve configuration in a tightly packed uint256. Here's how to decode it:
+
+```ts twoslash
+import { getBits } from "@bgd-labs/toolbox";
+
+const reserveConfig =
+  7237005577332262213973186568751985360575562463970013900505353201163601190220n;
+
+// Extract LTV (bits 0-15)
+const ltv = getBits(reserveConfig, 0n, 15n);
+console.log(`LTV: ${Number(ltv) / 100}%`);
+
+// Extract liquidation threshold (bits 16-31)
+const liquidationThreshold = getBits(reserveConfig, 16n, 31n);
+console.log(`Liquidation Threshold: ${Number(liquidationThreshold) / 100}%`);
+
+// Extract decimals (bits 48-55)
+const decimals = getBits(reserveConfig, 48n, 55n);
+console.log(`Decimals: ${decimals}`);
+
+// Extract boolean flags (single bits)
+const isActive = getBits(reserveConfig, 56n, 56n) === 1n;
+const isFrozen = getBits(reserveConfig, 57n, 57n) === 1n;
+const borrowingEnabled = getBits(reserveConfig, 58n, 58n) === 1n;
+
+console.log(
+  `Active: ${isActive}, Frozen: ${isFrozen}, Borrowing: ${borrowingEnabled}`,
+);
+```
+
+## Performance Considerations
+
+The `getBits` function has been optimized with:
+
+- **Fast path for zero**: Returns immediately if input is 0
+- **Efficient bit length calculation**: Uses string conversion (the fastest method in JavaScript)
+- **Range validation**: Prevents common errors upfront
+- **Smart clamping**: Automatically handles out-of-bounds ranges
+
+## Common Patterns
+
+### Checking Multiple Flags
+
+```ts twoslash
+import { getBits } from "@bgd-labs/toolbox";
+
+function checkFlags(config: bigint) {
+  return {
+    flag1: getBits(config, 0n, 0n) === 1n,
+    flag2: getBits(config, 1n, 1n) === 1n,
+    flag3: getBits(config, 2n, 2n) === 1n,
+    flag4: getBits(config, 3n, 3n) === 1n,
+  };
+}
+
+const flags = checkFlags(0b1010n);
+// { flag1: false, flag2: true, flag3: false, flag4: true }
+```
+
+### Extracting Multiple Values
+
+```ts twoslash
+import { getBits } from "@bgd-labs/toolbox";
+
+function decodePackedData(packed: bigint) {
+  return {
+    value1: Number(getBits(packed, 0n, 7n)), // 8 bits
+    value2: Number(getBits(packed, 8n, 15n)), // 8 bits
+    value3: Number(getBits(packed, 16n, 31n)), // 16 bits
+    value4: Number(getBits(packed, 32n, 63n)), // 32 bits
+  };
+}
+```
+
+### Building Configuration
+
+```ts twoslash
+import { setBits } from "@bgd-labs/toolbox";
+
+function buildConfig(params: {
+  ltv: number;
+  liquidationThreshold: number;
+  decimals: number;
+  active: boolean;
+}) {
+  let config = 0n;
+  config = setBits(config, 0n, 15n, BigInt(params.ltv));
+  config = setBits(config, 16n, 31n, BigInt(params.liquidationThreshold));
+  config = setBits(config, 48n, 55n, BigInt(params.decimals));
+  config = setBits(config, 56n, 56n, params.active ? 1n : 0n);
+  return config;
+}
+
+const config = buildConfig({
+  ltv: 8000,
+  liquidationThreshold: 8500,
+  decimals: 18,
+  active: true,
+});
+```
+
+## Tips
+
+- **Bit Positions**: Always 0-indexed from the right (LSB)
+- **Inclusive Ranges**: Both `startBit` and `endBit` are inclusive
+- **BigInt Required**: Use `n` suffix for all numeric literals
+- **Single Bits**: Use same value for start and end (e.g., `getBits(x, 5n, 5n)`)
+- **Validation**: The functions now validate inputs to prevent common errors

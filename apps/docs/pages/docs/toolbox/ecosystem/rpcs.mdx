@@ -1,0 +1,48 @@
+# Rpcs [Utilities for working with rpcs]
+
+## Rpc selection
+
+Working with rpcs can be pain, especially in multichain projects.
+Some networks are supported by an rpc provider some are not.
+Different providers follow different naming conventions and for some it's not even straight forward to figure out which chains they support
+
+Therefore with `getRPCUrl` we created a utility function to retrieve a rpc for a given `ChainId` based on your provided config.
+
+```ts twoslash
+import {
+  getRPCUrl,
+  ChainId,
+  getExplicitRPC,
+  getAlchemyRPC,
+  getQuicknodeRpc,
+  getPublicRpc,
+} from "@bgd-labs/toolbox";
+
+// will fetch the rpc based on a opinionated priorization and does not error if no rpc is found
+// 1. checks if `RPC_MAINNET` is set, otherwise
+// 2. checks if alchemy key was provided & if alchemy supports the network, otherwise
+// 3. checks if quicknode key was provided & if quicknode supports the network, otherwise
+// 4. checks if a public rpc is configured
+const url = getRPCUrl(ChainId.mainnet, {
+  alchemyKey: "[ALCHEMY_API_KEY]",
+  quicknodeToken: "[QUICKNODE_TOKEN]",
+  quicknodeEndpointName: "[QUICKNODE_ENDPOINT_NAME]",
+});
+
+// alternatively you can use the explicit getters, which will throw if no rpc is found
+
+// expects the rpc to be available in your current env and to follow our common naming schema `RPC_NETWORK`
+const envRPC = getExplicitRPC(ChainId.mainnet);
+
+// returns the rpc for a given alchemyApiKey if the chain is supported by alchemy
+const alchemyRpc = getAlchemyRPC(ChainId.mainnet, "ALCHEMY_API_KEY");
+
+// returns the rpc for the provided quicknode credentials if the chain is supported by quicknode
+const quicknodeRpc = getQuicknodeRpc(ChainId.mainnet, {
+  quicknodeEndpointName: "QUICKNODE_ENDPOINT_NAME",
+  quicknodeToken: "QUICKNODE_TOKEN",
+});
+
+// returns a public rpc on chains that have a reliable public rpc (it's not recommended to use them)
+const publicRpc = getPublicRpc(ChainId.mainnet);
+```

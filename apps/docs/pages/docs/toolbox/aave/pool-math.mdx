@@ -1,0 +1,339 @@
+# Pool Math [Interest rate calculations and health factor computations]
+
+The Pool Math utilities provide JavaScript implementations of Aave's core mathematical calculations, allowing you to compute interest rates, health factors, and other pool-related metrics without making blockchain calls.
+
+## Overview
+
+These functions replicate the logic from Aave's ReserveLogic and GenericLogic contracts:
+
+- **Interest Calculations**: Compute compounded and linear interest
+- **Index Updates**: Calculate current liquidity and debt indexes
+- **Balance Calculations**: Determine actual balances from scaled balances
+- **Health Factor**: Calculate user's health factor for liquidation risk
+- **Borrow Capacity**: Determine available borrowing power
+
+All calculations use `bigint` for precision and are based on Aave's RAY math (27 decimals).
+
+## Interest Rate Calculations
+
+### Compounded Interest
+
+Calculate interest compounded per second:
+
+```ts twoslash
+import { calculateCompoundedInterest } from "@bgd-labs/toolbox";
+
+const interest = calculateCompoundedInterest({
+  rate: 50000000000000000000000000n, // 5% APY in RAY
+  currentTimestamp: 1700000000,
+  lastUpdateTimestamp: 1699913600, // 24 hours ago
+});
+// Returns the compounded interest multiplier in RAY
+```
+
+### Linear Interest
+
+Calculate simple linear interest:
+
+```ts twoslash
+import { calculateLinearInterest } from "@bgd-labs/toolbox";
+
+const interest = calculateLinearInterest({
+  rate: 30000000000000000000000000n, // 3% APY in RAY
+  currentTimestamp: 1700000000,
+  lastUpdateTimestamp: 1699913600,
+});
+// Returns the linear interest multiplier in RAY
+```
+
+## Normalized Indexes
+
+### Liquidity Index
+
+Get the current liquidity index (for aToken balances):
+
+```ts twoslash
+import { getNormalizedIncome } from "@bgd-labs/toolbox";
+
+const currentIndex = getNormalizedIncome({
+  rate: 25000000000000000000000000n, // Current liquidity rate
+  index: 1050000000000000000000000000n, // Last liquidity index
+  lastUpdateTimestamp: 1699900000,
+  currentTimestamp: 1700000000,
+});
+// Returns updated liquidity index
+```
+
+### Debt Index
+
+Get the current variable debt index:
+
+```ts twoslash
+import { getNormalizedDebt } from "@bgd-labs/toolbox";
+
+const currentDebtIndex = getNormalizedDebt({
+  rate: 50000000000000000000000000n, // Current variable borrow rate
+  index: 1080000000000000000000000000n, // Last variable debt index
+  lastUpdateTimestamp: 1699900000,
+  currentTimestamp: 1700000000,
+});
+// Returns updated debt index
+```
+
+## Balance Calculations
+
+### Current Liquidity Balance
+
+Convert scaled aToken balance to actual balance:
+
+```ts twoslash
+import { getCurrentLiquidityBalance } from "@bgd-labs/toolbox";
+
+const actualBalance = getCurrentLiquidityBalance({
+  scaledBalance: 1000000000000000000n, // 1 token (scaled)
+  index: 1050000000000000000000000000n, // Current liquidity index
+  rate: 25000000000000000000000000n, // Current liquidity rate
+  lastUpdateTimestamp: 1699900000,
+  currentTimestamp: 1700000000,
+});
+// Returns actual aToken balance including accrued interest
+```
+
+### Current Debt Balance
+
+Convert scaled debt to actual debt balance:
+
+```ts twoslash
+import { getCurrentDebtBalance } from "@bgd-labs/toolbox";
+
+const actualDebt = getCurrentDebtBalance({
+  scaledBalance: 500000000000000000n, // 0.5 tokens (scaled)
+  index: 1080000000000000000000000000n, // Current variable debt index
+  rate: 50000000000000000000000000n, // Current variable borrow rate
+  lastUpdateTimestamp: 1699900000,
+  currentTimestamp: 1700000000,
+});
+// Returns actual debt including accrued interest
+```
+
+## Health Factor Calculation
+
+Calculate a user's health factor:
+
+```ts twoslash
+import { calculateHealthFactorFromBalances } from "@bgd-labs/toolbox";
+
+const healthFactor = calculateHealthFactorFromBalances({
+  collateralBalanceMarketReferenceCurrency: 10000000000n, // $10,000 collateral
+  borrowBalanceMarketReferenceCurrency: 6000000000n, // $6,000 borrowed
+  averageLiquidationThreshold: 8000n, // 80% (in basis points)
+});
+// Returns health factor in WAD (1e18 = 1.0 HF)
+// Result: ~1.33e18 (HF = 1.33)
+```
+
+### Complete Health Factor with Positions
+
+Calculate health factor from user positions:
+
+```ts twoslash
+import { calculateHealthFactor } from "@bgd-labs/toolbox";
+
+const result = calculateHealthFactor(
+  { emode: 0 }, // User config
+  [
+    {
+      underlying: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" as `0x${string}`, // USDC
+      scaledATokenBalance: "1000000000", // 1000 USDC scaled
+      scaledVariableDebtTokenBalance: "0",
+    },
+    {
+      underlying: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2" as `0x${string}`, // WETH
+      scaledATokenBalance: "0",
+      scaledVariableDebtTokenBalance: "500000000000000000", // 0.5 WETH scaled
+    },
+  ],
+  {
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": {
+      id: 0,
+      liquidityIndex: "1050000000000000000000000000",
+      liquidityRate: "25000000000000000000000000",
+      variableBorrowIndex: "1000000000000000000000000000",
+      variableBorrowRate: "0",
+      lastUpdateTimestamp: 1699900000,
+      decimals: 6,
+      liquidationThreshold: 8500, // 85%
+    },
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": {
+      id: 1,
+      liquidityIndex: "1000000000000000000000000000",
+      liquidityRate: "0",
+      variableBorrowIndex: "1080000000000000000000000000",
+      variableBorrowRate: "50000000000000000000000000",
+      lastUpdateTimestamp: 1699900000,
+      decimals: 18,
+      liquidationThreshold: 8250, // 82.5%
+    },
+  },
+  {
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48": 100000000, // $1.00 (8 decimals)
+    "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2": 200000000000, // $2000.00 (8 decimals)
+  },
+  {}, // E-modes (empty if not using)
+  1700000000, // Current timestamp
+);
+
+console.log("Health Factor:", result.healthFactor);
+console.log("Total Collateral:", result.totalCollateralInBaseCurrency);
+console.log("Total Debt:", result.totalDebtInBaseCurrency);
+```
+
+## Available Borrowing Capacity
+
+Calculate how much more a user can borrow:
+
+```ts twoslash
+import { calculateAvailableBorrowsMarketReferenceCurrency } from "@bgd-labs/toolbox";
+
+const availableToBorrow = calculateAvailableBorrowsMarketReferenceCurrency({
+  collateralBalanceMarketReferenceCurrency: 10000000000n, // $10,000
+  borrowBalanceMarketReferenceCurrency: 6000000000n, // $6,000
+  currentLtv: 7500n, // 75% LTV (in basis points)
+});
+// Returns: 1500000000n ($1,500 more can be borrowed)
+// Calculation: (10000 * 0.75) - 6000 = 1500
+```
+
+## Market Reference Currency Conversion
+
+Convert asset balance to base currency and USD:
+
+```ts twoslash
+import { getMarketReferenceCurrencyAndUsdBalance } from "@bgd-labs/toolbox";
+
+const { marketReferenceCurrencyBalance, usdBalance } =
+  getMarketReferenceCurrencyAndUsdBalance({
+    balance: 5000000000000000000n, // 5 tokens (18 decimals)
+    priceInMarketReferenceCurrency: 200000000000n, // $2000 (8 decimals)
+    marketReferenceCurrencyDecimals: 8,
+    decimals: 18,
+    marketReferencePriceInUsdNormalized: 100000000n, // $1.00 (8 decimals)
+  });
+
+console.log("Market Ref:", marketReferenceCurrencyBalance);
+console.log("USD:", usdBalance);
+```
+
+## Asset to Base Currency
+
+Simple conversion from asset amount to base currency:
+
+```ts twoslash
+import { assetToBase } from "@bgd-labs/toolbox";
+
+const baseAmount = assetToBase(
+  1000000000000000000n, // 1 token (18 decimals)
+  200000000000, // $2000 price (8 decimals)
+  18, // token decimals
+);
+// Returns amount in base currency (8 decimals)
+```
+
+## Practical Example: User Dashboard
+
+```ts twoslash
+import {
+  calculateHealthFactor,
+  calculateAvailableBorrowsMarketReferenceCurrency,
+  getCurrentLiquidityBalance,
+  getCurrentDebtBalance,
+} from "@bgd-labs/toolbox";
+import type { Address } from "viem";
+
+async function getUserDashboard(
+  userAddress: Address,
+  reserves: any,
+  prices: Record<Address, number>,
+  currentTimestamp: number,
+) {
+  // Fetch user positions (pseudo-code)
+  const positions = await fetchUserPositions(userAddress);
+
+  // Calculate current balances
+  const enrichedPositions = positions.map((pos) => {
+    const reserve = reserves[pos.underlying];
+
+    const currentSupply = getCurrentLiquidityBalance({
+      scaledBalance: BigInt(pos.scaledATokenBalance),
+      index: BigInt(reserve.liquidityIndex),
+      rate: BigInt(reserve.liquidityRate),
+      lastUpdateTimestamp: reserve.lastUpdateTimestamp,
+      currentTimestamp,
+    });
+
+    const currentDebt = getCurrentDebtBalance({
+      scaledBalance: BigInt(pos.scaledVariableDebtTokenBalance),
+      index: BigInt(reserve.variableBorrowIndex),
+      rate: BigInt(reserve.variableBorrowRate),
+      lastUpdateTimestamp: reserve.lastUpdateTimestamp,
+      currentTimestamp,
+    });
+
+    return { ...pos, currentSupply, currentDebt };
+  });
+
+  // Calculate health factor
+  const {
+    healthFactor,
+    totalCollateralInBaseCurrency,
+    totalDebtInBaseCurrency,
+  } = calculateHealthFactor(
+    { emode: 0 },
+    positions,
+    reserves,
+    prices,
+    {},
+    currentTimestamp,
+  );
+
+  // Calculate available to borrow
+  const avgLtv = 7500n; // Would calculate from reserves
+  const availableToBorrow = calculateAvailableBorrowsMarketReferenceCurrency({
+    collateralBalanceMarketReferenceCurrency: totalCollateralInBaseCurrency,
+    borrowBalanceMarketReferenceCurrency: totalDebtInBaseCurrency,
+    currentLtv: avgLtv,
+  });
+
+  return {
+    positions: enrichedPositions,
+    healthFactor,
+    totalCollateral: totalCollateralInBaseCurrency,
+    totalDebt: totalDebtInBaseCurrency,
+    availableToBorrow,
+    liquidationRisk:
+      healthFactor < 1.1 ? "high" : healthFactor < 1.5 ? "medium" : "low",
+  };
+}
+
+declare function fetchUserPositions(address: Address): Promise<any[]>;
+```
+
+## Constants
+
+The module also exports important constants:
+
+```ts twoslash
+import { SECONDS_PER_YEAR, LTV_PRECISION } from "@bgd-labs/toolbox";
+
+console.log(SECONDS_PER_YEAR); // 31536000n (365 * 24 * 60 * 60)
+console.log(LTV_PRECISION); // 4n (10000 basis points = 100%)
+```
+
+## Tips
+
+- **Precision**: All calculations use RAY (27 decimals) for maximum precision
+- **Timestamps**: Use Unix timestamps in seconds
+- **Rates**: All rates are in RAY format (e.g., 5% = 50000000000000000000000000n)
+- **Indexes**: Always start from the last known index and update with current rate
+- **Health Factor**: HF < 1.0 means position can be liquidated
+- **E-Mode**: Consider e-mode collateral bitmap for accurate LT calculations

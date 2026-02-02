@@ -1,0 +1,26 @@
+# Reserve [Utilities for Aave reserve operations]
+
+## Decoding the reserve configuration
+
+The aave reserve configuration is a tightly packed uint256.
+While the independent parts of the config can be accessed via various getterts on the `ProtocolDataProvider`, `decodeReserveConfiguration` offers a way to decode the config via javascript.
+
+```ts twoslash
+import { decodeReserveConfiguration } from "@bgd-labs/toolbox";
+
+const decodedConfig =
+  decodeReserveConfiguration(
+    7237005577332262213973186568751985360575562463970013900505353201163601190220n,
+  );
+```
+
+For Aave V2 instances the configuration can be decoded via `decodeReserveConfigurationV2`.
+
+```ts twoslash
+import { decodeReserveConfigurationV2 } from "@bgd-labs/toolbox";
+
+const decodedConfig =
+  decodeReserveConfigurationV2(
+    7237005577332262213973186568751985360575562463970013900505353201163601190220n,
+  );
+```

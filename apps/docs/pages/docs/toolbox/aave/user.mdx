@@ -1,0 +1,15 @@
+# User [Utilities for Aave user operations]
+
+## Decoding the user configuration
+
+The aave user configuration is a bitmap encoded with alternating bits which indicate borrowing and collateral usage.
+
+```ts twoslash
+import { decodeUserConfiguration } from "@bgd-labs/toolbox";
+
+const userConfig = decodeUserConfiguration(0b110001n);
+// {
+//   borrowedAssetIds: [0, 2],
+//   collateralAssetIds: [2],
+// }
+```

@@ -1,0 +1,8 @@
+# Ray Math [A node RayMath.sol implementation based on bigint]
+
+Aave relies on `RayMath.sol` to work with big numbers.
+Sometimes it is useful to replicate this logic in node if you want to calculate data without sending requests to a node.
+
+```ts twoslash
+import { rayMul, rayDiv, rayToWad, wadToRay, wadDiv } from "@bgd-labs/toolbox";
+```

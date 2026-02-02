@@ -1,0 +1,39 @@
+# Aave Virtual Testnets [Utilities for creating testnets and executing payloads]
+
+While for aave upgrades the emphasis lies on unit testing, diffing and audits, especially for frontend integrations it can be useful to have a fork with a certain proposal executed.
+To streamline this process we've built some tooling on top of [Tenderly](https://tenderly.co) virtual testnets.
+
+## Options
+
+```sh
+Usage: @bgd-labs/cli aave-vnet [options]
+
+creates a tenderly virtual testnet and execute payloads
+
+Options:
+  --chainId <number>
+```
+
+## Usage
+
+```sh
+npx @bgd-labs/cli aave-vnet --chainId 1
+```
+
+This command will create a virtual testnet, expose the adminRpc and opens a dialog, which allows executing payloads ont he given network.
+
+```sh
+Virtual testnet created!
+RPC: https://virtual.mainnet.rpc.tenderly.co/<id>
+? What do you want to do?
+❯ Execute a registered payload
+  Execute a deployed (but not registered) payload
+  Execute a local payload.
+ ──────────────
+  Exit (this will keep the vnet open - you can delete it via tenderly ui)
+  Exit and delete
+```
+
+## References
+
+For people relying on `anvil` we also provide some solidity tooling [aave-helpers](https://github.com/bgd-labs/aave-helpers/blob/main/src/GovV3Helpers.sol) to execute payloads.

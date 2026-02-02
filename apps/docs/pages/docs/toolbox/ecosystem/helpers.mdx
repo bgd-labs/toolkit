@@ -1,0 +1,381 @@
+# RPC Helpers [Utilities for advanced RPC operations]
+
+The RPC helpers provide utilities for working with blockchain data more efficiently, including recursive log fetching, contract deployment detection, and implementation slot reading.
+
+## Overview
+
+These utilities help with:
+
+- **Recursive Log Fetching**: Automatically handle RPC limits when fetching logs
+- **Contract Deployment Detection**: Find when a contract was deployed
+- **Implementation Slot Reading**: Read proxy implementation addresses
+- **Error Handling**: Automatically retry with adjusted ranges on RPC errors
+
+## Recursive Log Fetching
+
+When fetching logs over large block ranges, RPC providers often have limits. `getLogsRecursive` automatically handles these limits by recursively splitting the range.
+
+### Basic Usage
+
+```ts twoslash
+import { getLogsRecursive, getClient, ChainId } from "@bgd-labs/toolbox";
+import type { AbiEvent } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const TransferEvent: AbiEvent = {
+  type: "event",
+  name: "Transfer",
+  inputs: [
+    { name: "from", type: "address", indexed: true },
+    { name: "to", type: "address", indexed: true },
+    { name: "value", type: "uint256", indexed: false },
+  ],
+};
+
+const logs = await getLogsRecursive({
+  client,
+  events: [TransferEvent],
+  address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+  fromBlock: 18000000n,
+  toBlock: 19000000n, // 1M blocks - would normally fail
+});
+
+console.log(`Fetched ${logs.length} logs`);
+```
+
+### Multiple Contracts
+
+Fetch logs from multiple contracts:
+
+```ts twoslash
+import { getLogsRecursive, getClient, ChainId } from "@bgd-labs/toolbox";
+import type { AbiEvent } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const TransferEvent: AbiEvent = {
+  type: "event",
+  name: "Transfer",
+  inputs: [
+    { name: "from", type: "address", indexed: true },
+    { name: "to", type: "address", indexed: true },
+    { name: "value", type: "uint256", indexed: false },
+  ],
+};
+
+const logs = await getLogsRecursive({
+  client,
+  events: [TransferEvent],
+  address: [
+    "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+    "0xdAC17F958D2ee523a2206206994597C13D831ec7", // USDT
+  ],
+  fromBlock: 18000000n,
+  toBlock: 18100000n,
+});
+```
+
+### Multiple Events
+
+Fetch different event types:
+
+```ts twoslash
+import { getLogsRecursive, getClient, ChainId } from "@bgd-labs/toolbox";
+import type { AbiEvent } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const TransferEvent: AbiEvent = {
+  type: "event",
+  name: "Transfer",
+  inputs: [
+    { name: "from", type: "address", indexed: true },
+    { name: "to", type: "address", indexed: true },
+    { name: "value", type: "uint256", indexed: false },
+  ],
+};
+
+const ApprovalEvent: AbiEvent = {
+  type: "event",
+  name: "Approval",
+  inputs: [
+    { name: "owner", type: "address", indexed: true },
+    { name: "spender", type: "address", indexed: true },
+    { name: "value", type: "uint256", indexed: false },
+  ],
+};
+
+const logs = await getLogsRecursive({
+  client,
+  events: [TransferEvent, ApprovalEvent],
+  address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  fromBlock: 18000000n,
+  toBlock: 18100000n,
+});
+
+// Filter by event type
+const transfers = logs.filter((log) => log.eventName === "Transfer");
+const approvals = logs.filter((log) => log.eventName === "Approval");
+```
+
+## How It Works
+
+The function automatically:
+
+1. **Tries the full range first**: Attempts to fetch all logs in one request
+2. **Detects RPC limits**: Catches errors from the RPC provider
+3. **Splits the range**: Divides the range in half (or uses Alchemy's hint if available)
+4. **Retries recursively**: Fetches each half separately
+5. **Combines results**: Merges all logs in chronological order
+
+### Alchemy-Specific Handling
+
+For Alchemy, the function reads the suggested range from error messages:
+
+```ts
+// Alchemy error contains: [0x8d01be, 0x948ce4]
+// Function automatically uses these bounds for optimal performance
+```
+
+### Generic Divide-and-Conquer
+
+For other providers, it uses binary search:
+
+```ts
+// If fetching [1000, 2000] fails:
+// 1. Try [1000, 1500]
+// 2. Try [1501, 2000]
+// 3. Continue splitting if needed
+```
+
+## Contract Deployment Detection
+
+Find the block number when a contract was deployed using binary search:
+
+```ts twoslash
+import {
+  getContractDeploymentBlock,
+  getClient,
+  ChainId,
+} from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const deploymentBlock = await getContractDeploymentBlock({
+  client,
+  contractAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+  fromBlock: 0n, // Know it wasn't deployed at genesis
+  toBlock: 20000000n, // Know it was deployed before this
+  maxDelta: 100n, // Acceptable precision (within 100 blocks)
+});
+
+console.log(`Contract deployed around block ${deploymentBlock}`);
+```
+
+### How It Works
+
+1. **Binary Search**: Uses bytecode presence to narrow down deployment block
+2. **Max Delta**: Stops when the range is within `maxDelta` blocks
+3. **Returns**: The latest block where contract was NOT deployed
+
+### Finding Exact Block
+
+To find the exact deployment block, use a small `maxDelta` and add 1:
+
+```ts twoslash
+import {
+  getContractDeploymentBlock,
+  getClient,
+  ChainId,
+} from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const beforeDeployment = await getContractDeploymentBlock({
+  client,
+  contractAddress: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  fromBlock: 6000000n,
+  toBlock: 7000000n,
+  maxDelta: 1n, // Exact block
+});
+
+const deploymentBlock = beforeDeployment + 1n;
+console.log(`Contract deployed at block ${deploymentBlock}`);
+```
+
+## Reading Implementation Slot
+
+For ERC-1967 proxies, read the implementation address:
+
+```ts twoslash
+import { getImplementationSlot, getClient, ChainId } from "@bgd-labs/toolbox";
+import { getAddress } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const implementationSlot = await getImplementationSlot(
+  client,
+  "0xProxyAddress" as `0x${string}`,
+);
+
+// Convert bytes32 to address
+const implementation = getAddress(`0x${implementationSlot?.slice(26)}`);
+console.log("Implementation:", implementation);
+```
+
+### ERC-1967 Standard
+
+The implementation slot is defined by ERC-1967:
+
+```ts
+// keccak256("eip1967.proxy.implementation") - 1
+const slot =
+  "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+```
+
+## Practical Example: Historical Analysis
+
+Analyze all transfers for a token since deployment:
+
+```ts twoslash
+import {
+  getContractDeploymentBlock,
+  getLogsRecursive,
+  getClient,
+  ChainId,
+} from "@bgd-labs/toolbox";
+import type { AbiEvent } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+async function analyzeTokenHistory(tokenAddress: `0x${string}`) {
+  // 1. Find deployment block
+  const deploymentBlock = await getContractDeploymentBlock({
+    client,
+    contractAddress: tokenAddress,
+    fromBlock: 0n,
+    toBlock: await client.getBlockNumber(),
+    maxDelta: 100n,
+  });
+
+  console.log(`Token deployed around block ${deploymentBlock}`);
+
+  // 2. Fetch all transfers since deployment
+  const TransferEvent = {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+  } as const;
+
+  const transfers = await getLogsRecursive({
+    client,
+    events: [TransferEvent],
+    address: tokenAddress,
+    fromBlock: deploymentBlock,
+    toBlock: await client.getBlockNumber(),
+  });
+
+  // 3. Analyze
+  const uniqueUsers = new Set<string>();
+  let totalVolume = 0n;
+
+  for (const transfer of transfers) {
+    if (transfer.args) {
+      uniqueUsers.add(transfer.args.from as string);
+      uniqueUsers.add(transfer.args.to as string);
+      totalVolume += BigInt(transfer.args.value as bigint);
+    }
+  }
+
+  return {
+    deploymentBlock,
+    totalTransfers: transfers.length,
+    uniqueUsers: uniqueUsers.size,
+    totalVolume,
+  };
+}
+
+// Usage
+const stats = await analyzeTokenHistory(
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+);
+console.log(stats);
+```
+
+## Performance Tips
+
+### Log Fetching
+
+- **Archive Nodes**: Use archive nodes for historical data
+- **Smaller Ranges**: Start with smaller ranges for faster results
+- **Parallel Fetching**: The recursive splitting happens in parallel
+- **Caching**: Cache results to avoid refetching
+
+### Deployment Detection
+
+- **Known Bounds**: Use tighter bounds if you know approximate deployment time
+- **Max Delta**: Use larger `maxDelta` for faster results with lower precision
+- **Block Timestamps**: Use block timestamps to narrow search range
+
+## Error Handling
+
+```ts twoslash
+import { getLogsRecursive, getClient, ChainId } from "@bgd-labs/toolbox";
+import type { AbiEvent } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const TransferEvent: AbiEvent = {
+  type: "event",
+  name: "Transfer",
+  inputs: [
+    { name: "from", type: "address", indexed: true },
+    { name: "to", type: "address", indexed: true },
+    { name: "value", type: "uint256", indexed: false },
+  ],
+};
+
+try {
+  const logs = await getLogsRecursive({
+    client,
+    events: [TransferEvent],
+    address: "0xInvalidAddress" as `0x${string}`,
+    fromBlock: 18000000n,
+    toBlock: 19000000n,
+  });
+} catch (error) {
+  console.error("Failed to fetch logs:", error);
+  // Handle error appropriately
+}
+```
+
+## Constants
+
+The module exports important constants:
+
+```ts twoslash
+import { erc1967_ImplementationSlot } from "@bgd-labs/toolbox";
+
+console.log(erc1967_ImplementationSlot);
+// "0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc"
+```
+
+## Limitations
+
+- **Archive Nodes Required**: Deployment detection requires archive node access
+- **Rate Limits**: Still subject to RPC provider rate limits
+- **Memory**: Very large log ranges may consume significant memory
+- **Time**: Binary search for deployment can be slow with wide ranges
+
+## Best Practices
+
+1. **Use Archive Nodes**: For historical data and deployment detection
+2. **Set Reasonable Ranges**: Don't fetch more than needed
+3. **Cache Results**: Store deployment blocks and frequently accessed logs
+4. **Monitor Progress**: Add logging to track recursive splitting
+5. **Handle Errors**: Always wrap in try-catch for production code

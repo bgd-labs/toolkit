@@ -1,0 +1,37 @@
+{
+  "name": "@bgd-labs/cli",
+  "version": "0.0.80",
+  "main": "./dist/index.mjs",
+  "sideEffects": false,
+  "license": "MIT",
+  "files": [
+    "dist/**",
+    "README.md"
+  ],
+  "type": "module",
+  "bin": {
+    "cli": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts",
+    "dev": "tsup src/index.ts --watch",
+    "start": "node dist/index.js",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@bgd-labs/aave-address-book": "^4.30.3",
+    "@bgd-labs/toolbox": "workspace:*",
+    "@commander-js/extra-typings": "^13.1.0",
+    "@inquirer/prompts": "^7.3.2",
+    "dotenv": "^16.4.7",
+    "viem": "catalog:"
+  }
+}

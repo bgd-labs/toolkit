@@ -1,0 +1,413 @@
+# Tenderly [Simulation and virtual network utilities]
+
+Tenderly is a powerful platform for simulating transactions and creating virtual networks (vnets). These utilities simplify working with Tenderly's APIs.
+
+## Overview
+
+The Tenderly utilities provide:
+
+- **Virtual Network Management**: Create and manage Tenderly vnets (forks)
+- **Transaction Simulation**: Simulate transactions on any network
+- **Log Decoding**: Convert Tenderly's log format to standard ABI format
+- **Explorer Integration**: Ping Tenderly explorer for contract verification
+
+## Configuration
+
+All Tenderly functions require a configuration object:
+
+```ts
+import { tenderly_createVnet } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "your-account",
+  projectSlug: "your-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+```
+
+You can find these values in your Tenderly dashboard settings.
+
+## Creating a Virtual Network
+
+Create a fork of any network for testing:
+
+```ts
+import { tenderly_createVnet, ChainId } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+const vnet = await tenderly_createVnet(
+  {
+    slug: "my-test-fork",
+    displayName: "My Test Fork",
+    baseChainId: ChainId.mainnet,
+    forkChainId: 99999, // Custom chain ID for the fork
+    blockNumber: "0x112a880", // Optional: fork at specific block
+    force: true, // Delete existing fork with same slug
+  },
+  tenderlyConfig,
+);
+
+// Use the returned clients
+const {
+  testClient,
+  walletClient,
+  simulate,
+  delete: deleteFork,
+  vnet: vnetInfo,
+} = vnet;
+
+// Read data
+const blockNumber = await testClient.getBlockNumber();
+
+// Send transactions (admin account is pre-funded)
+const hash = await walletClient.sendTransaction({
+  to: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  value: 1000000000000000000n,
+});
+
+// Simulate without sending
+const simResult = await simulate({
+  from: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  to: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  input: "0x...", // calldata
+});
+
+// Clean up
+await deleteFork();
+```
+
+## Vnet Response
+
+The `tenderly_createVnet` function returns:
+
+```ts
+{
+  // The vnet details
+  vnet: {
+    id: string;
+    slug: string;
+    display_name: string;
+    fork_config: { network_id: number; block_number: string };
+    virtual_network_config: {
+      chain_config: { chain_id: number };
+      accounts: { address: string }[];
+    };
+    rpcs: [
+      { url: string; name: "Admin RPC" },
+      { url: string; name: "Public RPC" }
+    ];
+  };
+
+  // Ready-to-use viem test client
+  testClient: TestClient;
+
+  // Ready-to-use viem wallet client (with admin account)
+  walletClient: WalletClient;
+
+  // Simulate transactions on the vnet
+  simulate: (body: object) => Promise<any>;
+
+  // Delete the vnet
+  delete: () => Promise<Response>;
+}
+```
+
+## Transaction Simulation
+
+Simulate transactions without creating a vnet:
+
+```ts
+import { tenderly_sim, ChainId } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+const simulation = await tenderly_sim(tenderlyConfig, {
+  network_id: ChainId.mainnet.toString(),
+  from: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  to: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  input: "0xa9059cbb...", // transfer calldata
+  gas: 100000,
+  gas_price: "0",
+  value: "0",
+  save: true, // Save to Tenderly dashboard
+  simulation_type: "quick",
+});
+
+console.log("Success:", simulation.transaction.status);
+console.log("Gas used:", simulation.transaction.gas_used);
+console.log("Logs:", simulation.transaction.transaction_info.logs);
+```
+
+## Simulating on a Vnet
+
+Simulate transactions on an existing vnet:
+
+```ts
+import { tenderly_simVnet } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+const vnetId = "vnet-id-from-creation";
+
+const simulation = await tenderly_simVnet(vnetId, tenderlyConfig, {
+  from: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+  to: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+  input: "0xa9059cbb...",
+  network_id: "1",
+  block_number: null, // Use latest
+  transaction_index: 0,
+});
+```
+
+## Managing Vnets
+
+### Get Existing Vnets
+
+```ts
+import { tenderly_getVnet } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+// Find vnets by slug prefix
+const vnets = await tenderly_getVnet("my-test", tenderlyConfig);
+
+for (const vnet of vnets) {
+  console.log(`Found: ${vnet.slug} (${vnet.id})`);
+}
+```
+
+### Delete a Vnet
+
+```ts
+import { tenderly_deleteVnet } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+await tenderly_deleteVnet("vnet-id", tenderlyConfig);
+```
+
+## Log Conversion
+
+Convert Tenderly's internal log format to standard ABI format:
+
+```ts
+import {
+  tenderly_logsToAbiLogs,
+  SoltypeType,
+  StorageLocation,
+} from "@bgd-labs/toolbox";
+import type { TenderlyLog } from "@bgd-labs/toolbox";
+
+// Tenderly logs from simulation response
+const tenderlyLogs = [
+  {
+    name: "Transfer",
+    anonymous: false,
+    inputs: [
+      {
+        soltype: {
+          name: "from",
+          type: SoltypeType.Address,
+          storage_location: StorageLocation.Default,
+          components: null,
+          offset: 0,
+          index: "0",
+          indexed: true,
+        },
+        value: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+      },
+      {
+        soltype: {
+          name: "to",
+          type: SoltypeType.Address,
+          storage_location: StorageLocation.Default,
+          components: null,
+          offset: 0,
+          index: "0",
+          indexed: true,
+        },
+        value: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      },
+    ],
+  },
+] as readonly TenderlyLog[];
+
+const abiLogs = tenderly_logsToAbiLogs(tenderlyLogs);
+// Returns standard ABI event definitions compatible with viem, ethers, etc.
+```
+
+## Explorer Integration
+
+Ping Tenderly's explorer to verify a contract:
+
+```ts
+import { tenderly_pingExplorer, ChainId } from "@bgd-labs/toolbox";
+
+await tenderly_pingExplorer(
+  ChainId.mainnet,
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+);
+// Triggers Tenderly to index and verify the contract
+```
+
+## Complete Testing Example
+
+```ts
+import {
+  tenderly_createVnet,
+  ChainId,
+  getClient
+} from "@bgd-labs/toolbox";
+import { parseEther } from "viem";
+
+const tenderlyConfig = {
+  accountSlug: process.env.TENDERLY_ACCOUNT!,
+  projectSlug: process.env.TENDERLY_PROJECT!,
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+async function testContractUpgrade() {
+  // Create a fork at current block
+  const fork = await tenderly_createVnet(
+    {
+      slug: "upgrade-test",
+      displayName: "Upgrade Test",
+      baseChainId: ChainId.mainnet,
+      forkChainId: 88888,
+      force: true, // Replace if exists
+    },
+    tenderlyConfig
+  );
+
+  try {
+    // Fund a test account
+    await fork.testClient.setBalance({
+      address: "0xTestAccount",
+      value: parseEther("100"),
+    });
+
+    // Deploy new implementation
+    const newImpl = await fork.walletClient.deployContract({
+      abi: [...],
+      bytecode: "0x...",
+      args: [],
+    });
+
+    // Upgrade proxy
+    await fork.walletClient.writeContract({
+      address: "0xProxyAddress",
+      abi: [...],
+      functionName: "upgradeTo",
+      args: [newImpl],
+    });
+
+    // Verify upgrade worked
+    const implementation = await fork.testClient.readContract({
+      address: "0xProxyAddress",
+      abi: [...],
+      functionName: "implementation",
+    });
+
+    console.log("Upgrade successful:", implementation === newImpl);
+
+    // Simulate usage
+    const simResult = await fork.simulate({
+      from: "0xTestAccount",
+      to: "0xProxyAddress",
+      input: "0x...", // encoded function call
+    });
+
+    console.log("Simulation gas:", simResult.transaction.gas_used);
+
+  } finally {
+    // Always clean up
+    await fork.delete();
+  }
+}
+
+testContractUpgrade();
+```
+
+## Best Practices
+
+- **Clean Up**: Always delete vnets when done to avoid quota limits
+- **Force Flag**: Use `force: true` in development to automatically replace stale forks
+- **Block Numbers**: Fork at specific blocks for reproducible tests
+- **Gas Price**: Use `"0"` gas price for simulations to avoid gas calculations
+- **Save Simulations**: Set `save: true` to view simulations in Tenderly dashboard
+
+## Rate Limits
+
+Be aware of Tenderly's rate limits:
+
+- Free tier: Limited simulations and vnets
+- Paid tiers: Higher limits based on plan
+- Consider caching simulation results
+- Reuse vnets when possible instead of creating new ones
+
+## Error Handling
+
+```ts
+import { tenderly_createVnet, ChainId } from "@bgd-labs/toolbox";
+
+const tenderlyConfig = {
+  accountSlug: "my-account",
+  projectSlug: "my-project",
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+try {
+  const fork = await tenderly_createVnet(
+    {
+      slug: "test-fork",
+      displayName: "Test",
+      baseChainId: ChainId.mainnet,
+      forkChainId: 99999,
+    },
+    tenderlyConfig,
+  );
+
+  // Use fork...
+
+  await fork.delete();
+} catch (error) {
+  if (error.message.includes("conflict")) {
+    console.error("Fork already exists. Use force: true to replace.");
+  } else if (error.message.includes("unauthorized")) {
+    console.error("Invalid Tenderly credentials");
+  } else {
+    console.error("Tenderly error:", error);
+  }
+}
+```
+
+## Environment Variables
+
+Recommended `.env` setup:
+
+```bash
+TENDERLY_ACCOUNT=your-account-slug
+TENDERLY_PROJECT=your-project-slug
+TENDERLY_ACCESS_TOKEN=your-access-token
+```

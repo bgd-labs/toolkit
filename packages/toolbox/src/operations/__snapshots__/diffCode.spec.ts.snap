@@ -1,0 +1,902 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`operations:diffCode > should generate code diff between two contracts 1`] = `
+{
+  "ConfiguratorLogic.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol
++++ lib/aave-v3-origin/src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol
+@@ -126,14 +126,13 @@
+     function executeUpdateAToken(
+         IPool cachedPool,
+         ConfiguratorInputTypes.UpdateATokenInput calldata input
+     ) external {
+-        DataTypes.ReserveDataLegacy memory reserveData = cachedPool
+-            .getReserveData(input.asset);
++        address aTokenAddress = cachedPool.getReserveAToken(input.asset);
+ 
+-        (, , , uint256 decimals, ) = cachedPool
++        uint256 decimals = cachedPool
+             .getConfiguration(input.asset)
+-            .getParams();
++            .getDecimals();
+ 
+         bytes memory encodedCall = abi.encodeWithSelector(
+             IInitializableAToken.initialize.selector,
+             cachedPool,
+@@ -146,18 +145,14 @@
+             input.params
+         );
+ 
+         _upgradeTokenImplementation(
+-            reserveData.aTokenAddress,
++            aTokenAddress,
+             input.implementation,
+             encodedCall
+         );
+ 
+-        emit ATokenUpgraded(
+-            input.asset,
+-            reserveData.aTokenAddress,
+-            input.implementation
+-        );
++        emit ATokenUpgraded(input.asset, aTokenAddress, input.implementation);
+     }
+ 
+     /**
+      * @notice Updates the variable debt token implementation and initializes it
+@@ -168,14 +163,14 @@
+     function executeUpdateVariableDebtToken(
+         IPool cachedPool,
+         ConfiguratorInputTypes.UpdateDebtTokenInput calldata input
+     ) external {
+-        DataTypes.ReserveDataLegacy memory reserveData = cachedPool
+-            .getReserveData(input.asset);
++        address variableDebtTokenAddress = cachedPool
++            .getReserveVariableDebtToken(input.asset);
+ 
+-        (, , , uint256 decimals, ) = cachedPool
++        uint256 decimals = cachedPool
+             .getConfiguration(input.asset)
+-            .getParams();
++            .getDecimals();
+ 
+         bytes memory encodedCall = abi.encodeWithSelector(
+             IInitializableDebtToken.initialize.selector,
+             cachedPool,
+@@ -187,16 +182,16 @@
+             input.params
+         );
+ 
+         _upgradeTokenImplementation(
+-            reserveData.variableDebtTokenAddress,
++            variableDebtTokenAddress,
+             input.implementation,
+             encodedCall
+         );
+ 
+         emit VariableDebtTokenUpgraded(
+             input.asset,
+-            reserveData.variableDebtTokenAddress,
++            variableDebtTokenAddress,
+             input.implementation
+         );
+     }
+ 
+",
+  "DataTypes.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/types/DataTypes.sol
++++ lib/aave-v3-origin/src/contracts/protocol/libraries/types/DataTypes.sol
+@@ -49,10 +49,11 @@
+         //variable borrow index. Expressed in ray
+         uint128 variableBorrowIndex;
+         //the current variable borrow rate. Expressed in ray
+         uint128 currentVariableBorrowRate;
+-        // DEPRECATED on v3.2.0
+-        uint128 __deprecatedStableBorrowRate;
++        /// @notice reused \`__deprecatedStableBorrowRate\` storage from pre 3.2
++        // the current accumulate deficit in underlying tokens
++        uint128 deficit;
+         //timestamp of last update
+         uint40 lastUpdateTimestamp;
+         //the id of the reserve. Represents the position in the list of the active reserves
+         uint16 id;
+@@ -216,8 +217,13 @@
+         address oracle;
+         uint8 userEModeCategory;
+     }
+ 
++    struct ExecuteEliminateDeficitParams {
++        address asset;
++        uint256 amount;
++    }
++
+     struct ExecuteSetUserEModeParams {
+         uint256 reservesCount;
+         address oracle;
+         uint8 categoryId;
+",
+  "EModeConfiguration.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/configuration/EModeConfiguration.sol
++++ lib/aave-v3-origin/src/contracts/protocol/libraries/configuration/EModeConfiguration.sol
+@@ -1,9 +1,8 @@
+ // SPDX-License-Identifier: MIT
+ pragma solidity ^0.8.0;
+ 
+ import {Errors} from "../helpers/Errors.sol";
+-import {DataTypes} from "../types/DataTypes.sol";
+ import {ReserveConfiguration} from "./ReserveConfiguration.sol";
+ 
+ /**
+  * @title EModeConfiguration library
+",
+  "Errors.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/helpers/Errors.sol
++++ lib/aave-v3-origin/src/contracts/protocol/libraries/helpers/Errors.sol
+@@ -100,5 +100,9 @@
+     string public constant LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED = "97"; // 'Liquidation grace sentinel validation failed'
+     string public constant INVALID_GRACE_PERIOD = "98"; // Grace period above a valid range
+     string public constant INVALID_FREEZE_STATE = "99"; // Reserve is already in the passed freeze state
+     string public constant NOT_BORROWABLE_IN_EMODE = "100"; // Asset not borrowable in eMode
++    string public constant CALLER_NOT_UMBRELLA = "101"; // The caller of the function is not the umbrella contract
++    string public constant RESERVE_NOT_IN_DEFICIT = "102"; // The reserve is not in deficit
++    string public constant MUST_NOT_LEAVE_DUST = "103"; // Below a certain threshold liquidators need to take the full position
++    string public constant USER_CANNOT_HAVE_DEBT = "104"; // Thrown when a user tries to interact with a method that requires a position without debt
+ }
+",
+  "IPool.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/interfaces/IPool.sol
++++ lib/aave-v3-origin/src/contracts/interfaces/IPool.sol
+@@ -204,15 +204,39 @@
+         uint256 variableBorrowIndex
+     );
+ 
+     /**
++     * @dev Emitted when the deficit of a reserve is covered.
++     * @param reserve The address of the underlying asset of the reserve
++     * @param caller The caller that triggered the DeficitCovered event
++     * @param amountCovered The amount of deficit covered
++     */
++    event DeficitCovered(
++        address indexed reserve,
++        address caller,
++        uint256 amountCovered
++    );
++
++    /**
+      * @dev Emitted when the protocol treasury receives minted aTokens from the accrued interest.
+      * @param reserve The address of the reserve
+      * @param amountMinted The amount minted to the treasury
+      */
+     event MintedToTreasury(address indexed reserve, uint256 amountMinted);
+ 
+     /**
++     * @dev Emitted when deficit is realized on a liquidation.
++     * @param user The user address where the bad debt will be burned
++     * @param debtAsset The address of the underlying borrowed asset to be burned
++     * @param amountCreated The amount of deficit created
++     */
++    event DeficitCreated(
++        address indexed user,
++        address indexed debtAsset,
++        uint256 amountCreated
++    );
++
++    /**
+      * @notice Mints an \`amount\` of aTokens to the \`onBehalfOf\`
+      * @param asset The address of the underlying asset to mint
+      * @param amount The amount to mint
+      * @param onBehalfOf The address that will receive the aTokens
+@@ -600,18 +624,8 @@
+         address asset
+     ) external view returns (DataTypes.ReserveDataLegacy memory);
+ 
+     /**
+-     * @notice Returns the state and configuration of the reserve, including extra data included with Aave v3.1
+-     * @dev DEPRECATED use independent getters instead (getReserveData, getLiquidationGracePeriod)
+-     * @param asset The address of the underlying asset of the reserve
+-     * @return The state and configuration data of the reserve with virtual accounting
+-     */
+-    function getReserveDataExtended(
+-        address asset
+-    ) external view returns (DataTypes.ReserveData memory);
+-
+-    /**
+      * @notice Returns the virtual underlying balance of the reserve
+      * @param asset The address of the underlying asset of the reserve
+      * @return The reserve virtual underlying balance
+      */
+@@ -800,9 +814,11 @@
+      * @notice Returns the liquidation grace period of the given asset
+      * @param asset The address of the underlying asset
+      * @return Timestamp when the liquidation grace period will end
+      **/
+-    function getLiquidationGracePeriod(address asset) external returns (uint40);
++    function getLiquidationGracePeriod(
++        address asset
++    ) external view returns (uint40);
+ 
+     /**
+      * @notice Returns the total fee on flash loans
+      * @return The total fee on flashloans
+@@ -860,8 +876,41 @@
+         uint16 referralCode
+     ) external;
+ 
+     /**
++     * @notice It covers the deficit of a specified reserve by burning:
++     * - the equivalent aToken \`amount\` for assets with virtual accounting enabled
++     * - the equivalent \`amount\` of underlying for assets with virtual accounting disabled (e.g. GHO)
++     * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
++     * @param asset The address of the underlying asset to cover the deficit.
++     * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
++     */
++    function eliminateReserveDeficit(address asset, uint256 amount) external;
++
++    /**
++     * @notice Returns the current deficit of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The current deficit of the reserve
++     */
++    function getReserveDeficit(address asset) external view returns (uint256);
++
++    /**
++     * @notice Returns the aToken address of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The address of the aToken
++     */
++    function getReserveAToken(address asset) external view returns (address);
++
++    /**
++     * @notice Returns the variableDebtToken address of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The address of the variableDebtToken
++     */
++    function getReserveVariableDebtToken(
++        address asset
++    ) external view returns (address);
++
++    /**
+      * @notice Gets the address of the external FlashLoanLogic
+      */
+     function getFlashLoanLogic() external view returns (address);
+ 
+",
+  "IPoolDataProvider.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/interfaces/IPoolDataProvider.sol
++++ lib/aave-v3-origin/src/contracts/interfaces/IPoolDataProvider.sol
+@@ -255,5 +255,12 @@
+      */
+     function getVirtualUnderlyingBalance(
+         address asset
+     ) external view returns (uint256);
++
++    /**
++     * @notice Returns the deficit of the reserve
++     * @param asset The address of the underlying asset of the reserve
++     * @return The reserve deficit
++     */
++    function getReserveDeficit(address asset) external view returns (uint256);
+ }
+",
+  "PoolConfigurator.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/pool/PoolConfigurator.sol
++++ lib/aave-v3-origin/src/contracts/protocol/pool/PoolConfigurator.sol
+@@ -14,10 +14,8 @@
+ import {IPoolConfigurator} from "../../interfaces/IPoolConfigurator.sol";
+ import {IPool} from "../../interfaces/IPool.sol";
+ import {IACLManager} from "../../interfaces/IACLManager.sol";
+ import {IPoolDataProvider} from "../../interfaces/IPoolDataProvider.sol";
+-import {IERC20} from "../../dependencies/openzeppelin/contracts/IERC20.sol";
+-import {IERC20Detailed} from "../../dependencies/openzeppelin/contracts/IERC20Detailed.sol";
+ 
+ /**
+  * @title PoolConfigurator
+  * @author Aave
+",
+  "PoolConfiguratorInstance.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/instances/PoolConfiguratorInstance.sol
++++ lib/aave-v3-origin/src/contracts/instances/PoolConfiguratorInstance.sol
+@@ -3,9 +3,9 @@
+ 
+ import {PoolConfigurator, IPoolAddressesProvider, IPool, VersionedInitializable} from "../protocol/pool/PoolConfigurator.sol";
+ 
+ contract PoolConfiguratorInstance is PoolConfigurator {
+-    uint256 public constant CONFIGURATOR_REVISION = 4;
++    uint256 public constant CONFIGURATOR_REVISION = 5;
+ 
+     /// @inheritdoc VersionedInitializable
+     function getRevision() internal pure virtual override returns (uint256) {
+         return CONFIGURATOR_REVISION;
+",
+  "ReserveConfiguration.sol": "===================================================================
+--- lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol
++++ lib/aave-v3-origin/src/contracts/protocol/libraries/configuration/ReserveConfiguration.sol
+@@ -9,28 +9,28 @@
+  * @author Aave
+  * @notice Implements the bitmap logic to handle the reserve configuration
+  */
+ library ReserveConfiguration {
+-    uint256 internal constant LTV_MASK =                       0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000; // prettier-ignore
+-    uint256 internal constant LIQUIDATION_THRESHOLD_MASK =     0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFF; // prettier-ignore
+-    uint256 internal constant LIQUIDATION_BONUS_MASK =         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFF; // prettier-ignore
+-    uint256 internal constant DECIMALS_MASK =                  0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF00FFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant ACTIVE_MASK =                    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant FROZEN_MASK =                    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant BORROWING_MASK =                 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFF; // prettier-ignore
++    uint256 internal constant LTV_MASK =                       0x000000000000000000000000000000000000000000000000000000000000FFFF; // prettier-ignore
++    uint256 internal constant LIQUIDATION_THRESHOLD_MASK =     0x00000000000000000000000000000000000000000000000000000000FFFF0000; // prettier-ignore
++    uint256 internal constant LIQUIDATION_BONUS_MASK =         0x0000000000000000000000000000000000000000000000000000FFFF00000000; // prettier-ignore
++    uint256 internal constant DECIMALS_MASK =                  0x00000000000000000000000000000000000000000000000000FF000000000000; // prettier-ignore
++    uint256 internal constant ACTIVE_MASK =                    0x0000000000000000000000000000000000000000000000000100000000000000; // prettier-ignore
++    uint256 internal constant FROZEN_MASK =                    0x0000000000000000000000000000000000000000000000000200000000000000; // prettier-ignore
++    uint256 internal constant BORROWING_MASK =                 0x0000000000000000000000000000000000000000000000000400000000000000; // prettier-ignore
+     // @notice there is an unoccupied hole of 1 bit at position 59 from pre 3.2 stableBorrowRateEnabled
+-    uint256 internal constant PAUSED_MASK =                    0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant BORROWABLE_IN_ISOLATION_MASK =   0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant SILOED_BORROWING_MASK =          0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFBFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant FLASHLOAN_ENABLED_MASK =         0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF7FFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant RESERVE_FACTOR_MASK =            0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant BORROW_CAP_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000FFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant SUPPLY_CAP_MASK =                0xFFFFFFFFFFFFFFFFFFFFFFFFFF000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant LIQUIDATION_PROTOCOL_FEE_MASK =  0xFFFFFFFFFFFFFFFFFFFFFF0000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+-    // @notice there is an unoccupied hole of 8 bits from 168 to 176 left from pre 3.2 eModeCategory
+-    uint256 internal constant UNBACKED_MINT_CAP_MASK =         0xFFFFFFFFFFF000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant DEBT_CEILING_MASK =              0xF0000000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
+-    uint256 internal constant VIRTUAL_ACC_ACTIVE_MASK =        0xEFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF; // prettier-ignore
++    uint256 internal constant PAUSED_MASK =                    0x0000000000000000000000000000000000000000000000001000000000000000; // prettier-ignore
++    uint256 internal constant BORROWABLE_IN_ISOLATION_MASK =   0x0000000000000000000000000000000000000000000000002000000000000000; // prettier-ignore
++    uint256 internal constant SILOED_BORROWING_MASK =          0x0000000000000000000000000000000000000000000000004000000000000000; // prettier-ignore
++    uint256 internal constant FLASHLOAN_ENABLED_MASK =         0x0000000000000000000000000000000000000000000000008000000000000000; // prettier-ignore
++    uint256 internal constant RESERVE_FACTOR_MASK =            0x00000000000000000000000000000000000000000000FFFF0000000000000000; // prettier-ignore
++    uint256 internal constant BORROW_CAP_MASK =                0x00000000000000000000000000000000000FFFFFFFFF00000000000000000000; // prettier-ignore
++    uint256 internal constant SUPPLY_CAP_MASK =                0x00000000000000000000000000FFFFFFFFF00000000000000000000000000000; // prettier-ignore
++    uint256 internal constant LIQUIDATION_PROTOCOL_FEE_MASK =  0x0000000000000000000000FFFF00000000000000000000000000000000000000; // prettier-ignore
++    //@notice there is an unoccupied hole of 8 bits from 168 to 176 left from pre 3.2 eModeCategory
++    uint256 internal constant UNBACKED_MINT_CAP_MASK =         0x00000000000FFFFFFFFF00000000000000000000000000000000000000000000; // prettier-ignore
++    uint256 internal constant DEBT_CEILING_MASK =              0x0FFFFFFFFFF00000000000000000000000000000000000000000000000000000; // prettier-ignore
++    uint256 internal constant VIRTUAL_ACC_ACTIVE_MASK =        0x1000000000000000000000000000000000000000000000000000000000000000; // prettier-ignore
+ 
+     /// @dev For the LTV, the start bit is 0 (up to 15), hence no bitshifting is needed
+     uint256 internal constant LIQUIDATION_THRESHOLD_START_BIT_POSITION = 16;
+     uint256 internal constant LIQUIDATION_BONUS_START_BIT_POSITION = 32;
+@@ -75,9 +75,9 @@
+         uint256 ltv
+     ) internal pure {
+         require(ltv <= MAX_VALID_LTV, Errors.INVALID_LTV);
+ 
+-        self.data = (self.data & LTV_MASK) | ltv;
++        self.data = (self.data & ~LTV_MASK) | ltv;
+     }
+ 
+     /**
+      * @notice Gets the Loan to Value of the reserve
+@@ -86,9 +86,9 @@
+      */
+     function getLtv(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+-        return self.data & ~LTV_MASK;
++        return self.data & LTV_MASK;
+     }
+ 
+     /**
+      * @notice Sets the liquidation threshold of the reserve
+@@ -104,9 +104,9 @@
+             Errors.INVALID_LIQ_THRESHOLD
+         );
+ 
+         self.data =
+-            (self.data & LIQUIDATION_THRESHOLD_MASK) |
++            (self.data & ~LIQUIDATION_THRESHOLD_MASK) |
+             (threshold << LIQUIDATION_THRESHOLD_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -117,9 +117,9 @@
+     function getLiquidationThreshold(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~LIQUIDATION_THRESHOLD_MASK) >>
++            (self.data & LIQUIDATION_THRESHOLD_MASK) >>
+             LIQUIDATION_THRESHOLD_START_BIT_POSITION;
+     }
+ 
+     /**
+@@ -133,9 +133,9 @@
+     ) internal pure {
+         require(bonus <= MAX_VALID_LIQUIDATION_BONUS, Errors.INVALID_LIQ_BONUS);
+ 
+         self.data =
+-            (self.data & LIQUIDATION_BONUS_MASK) |
++            (self.data & ~LIQUIDATION_BONUS_MASK) |
+             (bonus << LIQUIDATION_BONUS_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -146,9 +146,9 @@
+     function getLiquidationBonus(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~LIQUIDATION_BONUS_MASK) >>
++            (self.data & LIQUIDATION_BONUS_MASK) >>
+             LIQUIDATION_BONUS_START_BIT_POSITION;
+     }
+ 
+     /**
+@@ -162,9 +162,9 @@
+     ) internal pure {
+         require(decimals <= MAX_VALID_DECIMALS, Errors.INVALID_DECIMALS);
+ 
+         self.data =
+-            (self.data & DECIMALS_MASK) |
++            (self.data & ~DECIMALS_MASK) |
+             (decimals << RESERVE_DECIMALS_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -175,9 +175,9 @@
+     function getDecimals(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
++            (self.data & DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION;
+     }
+ 
+     /**
+      * @notice Sets the active state of the reserve
+@@ -188,9 +188,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool active
+     ) internal pure {
+         self.data =
+-            (self.data & ACTIVE_MASK) |
++            (self.data & ~ACTIVE_MASK) |
+             (uint256(active ? 1 : 0) << IS_ACTIVE_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -200,9 +200,9 @@
+      */
+     function getActive(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~ACTIVE_MASK) != 0;
++        return (self.data & ACTIVE_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the frozen state of the reserve
+@@ -213,9 +213,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool frozen
+     ) internal pure {
+         self.data =
+-            (self.data & FROZEN_MASK) |
++            (self.data & ~FROZEN_MASK) |
+             (uint256(frozen ? 1 : 0) << IS_FROZEN_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -225,9 +225,9 @@
+      */
+     function getFrozen(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~FROZEN_MASK) != 0;
++        return (self.data & FROZEN_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the paused state of the reserve
+@@ -238,9 +238,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool paused
+     ) internal pure {
+         self.data =
+-            (self.data & PAUSED_MASK) |
++            (self.data & ~PAUSED_MASK) |
+             (uint256(paused ? 1 : 0) << IS_PAUSED_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -250,9 +250,9 @@
+      */
+     function getPaused(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~PAUSED_MASK) != 0;
++        return (self.data & PAUSED_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the borrowable in isolation flag for the reserve.
+@@ -267,9 +267,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool borrowable
+     ) internal pure {
+         self.data =
+-            (self.data & BORROWABLE_IN_ISOLATION_MASK) |
++            (self.data & ~BORROWABLE_IN_ISOLATION_MASK) |
+             (uint256(borrowable ? 1 : 0) <<
+                 BORROWABLE_IN_ISOLATION_START_BIT_POSITION);
+     }
+ 
+@@ -284,9 +284,9 @@
+      */
+     function getBorrowableInIsolation(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~BORROWABLE_IN_ISOLATION_MASK) != 0;
++        return (self.data & BORROWABLE_IN_ISOLATION_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the siloed borrowing flag for the reserve.
+@@ -298,9 +298,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool siloed
+     ) internal pure {
+         self.data =
+-            (self.data & SILOED_BORROWING_MASK) |
++            (self.data & ~SILOED_BORROWING_MASK) |
+             (uint256(siloed ? 1 : 0) << SILOED_BORROWING_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -311,9 +311,9 @@
+      */
+     function getSiloedBorrowing(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~SILOED_BORROWING_MASK) != 0;
++        return (self.data & SILOED_BORROWING_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Enables or disables borrowing on the reserve
+@@ -324,9 +324,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool enabled
+     ) internal pure {
+         self.data =
+-            (self.data & BORROWING_MASK) |
++            (self.data & ~BORROWING_MASK) |
+             (uint256(enabled ? 1 : 0) << BORROWING_ENABLED_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -336,9 +336,9 @@
+      */
+     function getBorrowingEnabled(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~BORROWING_MASK) != 0;
++        return (self.data & BORROWING_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the reserve factor of the reserve
+@@ -354,9 +354,9 @@
+             Errors.INVALID_RESERVE_FACTOR
+         );
+ 
+         self.data =
+-            (self.data & RESERVE_FACTOR_MASK) |
++            (self.data & ~RESERVE_FACTOR_MASK) |
+             (reserveFactor << RESERVE_FACTOR_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -367,9 +367,9 @@
+     function getReserveFactor(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~RESERVE_FACTOR_MASK) >>
++            (self.data & RESERVE_FACTOR_MASK) >>
+             RESERVE_FACTOR_START_BIT_POSITION;
+     }
+ 
+     /**
+@@ -383,9 +383,9 @@
+     ) internal pure {
+         require(borrowCap <= MAX_VALID_BORROW_CAP, Errors.INVALID_BORROW_CAP);
+ 
+         self.data =
+-            (self.data & BORROW_CAP_MASK) |
++            (self.data & ~BORROW_CAP_MASK) |
+             (borrowCap << BORROW_CAP_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -395,9 +395,9 @@
+      */
+     function getBorrowCap(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+-        return (self.data & ~BORROW_CAP_MASK) >> BORROW_CAP_START_BIT_POSITION;
++        return (self.data & BORROW_CAP_MASK) >> BORROW_CAP_START_BIT_POSITION;
+     }
+ 
+     /**
+      * @notice Sets the supply cap of the reserve
+@@ -410,9 +410,9 @@
+     ) internal pure {
+         require(supplyCap <= MAX_VALID_SUPPLY_CAP, Errors.INVALID_SUPPLY_CAP);
+ 
+         self.data =
+-            (self.data & SUPPLY_CAP_MASK) |
++            (self.data & ~SUPPLY_CAP_MASK) |
+             (supplyCap << SUPPLY_CAP_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -422,9 +422,9 @@
+      */
+     function getSupplyCap(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+-        return (self.data & ~SUPPLY_CAP_MASK) >> SUPPLY_CAP_START_BIT_POSITION;
++        return (self.data & SUPPLY_CAP_MASK) >> SUPPLY_CAP_START_BIT_POSITION;
+     }
+ 
+     /**
+      * @notice Sets the debt ceiling in isolation mode for the asset
+@@ -437,9 +437,9 @@
+     ) internal pure {
+         require(ceiling <= MAX_VALID_DEBT_CEILING, Errors.INVALID_DEBT_CEILING);
+ 
+         self.data =
+-            (self.data & DEBT_CEILING_MASK) |
++            (self.data & ~DEBT_CEILING_MASK) |
+             (ceiling << DEBT_CEILING_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -450,9 +450,9 @@
+     function getDebtCeiling(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~DEBT_CEILING_MASK) >> DEBT_CEILING_START_BIT_POSITION;
++            (self.data & DEBT_CEILING_MASK) >> DEBT_CEILING_START_BIT_POSITION;
+     }
+ 
+     /**
+      * @notice Sets the liquidation protocol fee of the reserve
+@@ -468,9 +468,9 @@
+             Errors.INVALID_LIQUIDATION_PROTOCOL_FEE
+         );
+ 
+         self.data =
+-            (self.data & LIQUIDATION_PROTOCOL_FEE_MASK) |
++            (self.data & ~LIQUIDATION_PROTOCOL_FEE_MASK) |
+             (liquidationProtocolFee <<
+                 LIQUIDATION_PROTOCOL_FEE_START_BIT_POSITION);
+     }
+ 
+@@ -482,9 +482,9 @@
+     function getLiquidationProtocolFee(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~LIQUIDATION_PROTOCOL_FEE_MASK) >>
++            (self.data & LIQUIDATION_PROTOCOL_FEE_MASK) >>
+             LIQUIDATION_PROTOCOL_FEE_START_BIT_POSITION;
+     }
+ 
+     /**
+@@ -501,9 +501,9 @@
+             Errors.INVALID_UNBACKED_MINT_CAP
+         );
+ 
+         self.data =
+-            (self.data & UNBACKED_MINT_CAP_MASK) |
++            (self.data & ~UNBACKED_MINT_CAP_MASK) |
+             (unbackedMintCap << UNBACKED_MINT_CAP_START_BIT_POSITION);
+     }
+ 
+     /**
+@@ -514,9 +514,9 @@
+     function getUnbackedMintCap(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (uint256) {
+         return
+-            (self.data & ~UNBACKED_MINT_CAP_MASK) >>
++            (self.data & UNBACKED_MINT_CAP_MASK) >>
+             UNBACKED_MINT_CAP_START_BIT_POSITION;
+     }
+ 
+     /**
+@@ -528,9 +528,9 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool flashLoanEnabled
+     ) internal pure {
+         self.data =
+-            (self.data & FLASHLOAN_ENABLED_MASK) |
++            (self.data & ~FLASHLOAN_ENABLED_MASK) |
+             (uint256(flashLoanEnabled ? 1 : 0) <<
+                 FLASHLOAN_ENABLED_START_BIT_POSITION);
+     }
+ 
+@@ -541,9 +541,9 @@
+      */
+     function getFlashLoanEnabled(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~FLASHLOAN_ENABLED_MASK) != 0;
++        return (self.data & FLASHLOAN_ENABLED_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Sets the virtual account active/not state of the reserve
+@@ -554,23 +554,26 @@
+         DataTypes.ReserveConfigurationMap memory self,
+         bool active
+     ) internal pure {
+         self.data =
+-            (self.data & VIRTUAL_ACC_ACTIVE_MASK) |
++            (self.data & ~VIRTUAL_ACC_ACTIVE_MASK) |
+             (uint256(active ? 1 : 0) << VIRTUAL_ACC_START_BIT_POSITION);
+     }
+ 
+     /**
+      * @notice Gets the virtual account active/not state of the reserve
+      * @dev The state should be true for all normal assets and should be false
+-     *  only in special cases (ex. GHO) where an asset is minted instead of supplied.
++     * Virtual accounting being disabled means that the asset:
++     * - is GHO
++     * - can never be supplied
++     * - the interest rate strategy is not influenced by the virtual balance
+      * @param self The reserve configuration
+      * @return The active state
+      */
+     function getIsVirtualAccActive(
+         DataTypes.ReserveConfigurationMap memory self
+     ) internal pure returns (bool) {
+-        return (self.data & ~VIRTUAL_ACC_ACTIVE_MASK) != 0;
++        return (self.data & VIRTUAL_ACC_ACTIVE_MASK) != 0;
+     }
+ 
+     /**
+      * @notice Gets the configuration flags of the reserve
+@@ -585,12 +588,12 @@
+     ) internal pure returns (bool, bool, bool, bool) {
+         uint256 dataLocal = self.data;
+ 
+         return (
+-            (dataLocal & ~ACTIVE_MASK) != 0,
+-            (dataLocal & ~FROZEN_MASK) != 0,
+-            (dataLocal & ~BORROWING_MASK) != 0,
+-            (dataLocal & ~PAUSED_MASK) != 0
++            (dataLocal & ACTIVE_MASK) != 0,
++            (dataLocal & FROZEN_MASK) != 0,
++            (dataLocal & BORROWING_MASK) != 0,
++            (dataLocal & PAUSED_MASK) != 0
+         );
+     }
+ 
+     /**
+@@ -607,15 +610,15 @@
+     ) internal pure returns (uint256, uint256, uint256, uint256, uint256) {
+         uint256 dataLocal = self.data;
+ 
+         return (
+-            dataLocal & ~LTV_MASK,
+-            (dataLocal & ~LIQUIDATION_THRESHOLD_MASK) >>
++            dataLocal & LTV_MASK,
++            (dataLocal & LIQUIDATION_THRESHOLD_MASK) >>
+                 LIQUIDATION_THRESHOLD_START_BIT_POSITION,
+-            (dataLocal & ~LIQUIDATION_BONUS_MASK) >>
++            (dataLocal & LIQUIDATION_BONUS_MASK) >>
+                 LIQUIDATION_BONUS_START_BIT_POSITION,
+-            (dataLocal & ~DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
+-            (dataLocal & ~RESERVE_FACTOR_MASK) >>
++            (dataLocal & DECIMALS_MASK) >> RESERVE_DECIMALS_START_BIT_POSITION,
++            (dataLocal & RESERVE_FACTOR_MASK) >>
+                 RESERVE_FACTOR_START_BIT_POSITION
+         );
+     }
+ 
+@@ -630,9 +633,9 @@
+     ) internal pure returns (uint256, uint256) {
+         uint256 dataLocal = self.data;
+ 
+         return (
+-            (dataLocal & ~BORROW_CAP_MASK) >> BORROW_CAP_START_BIT_POSITION,
+-            (dataLocal & ~SUPPLY_CAP_MASK) >> SUPPLY_CAP_START_BIT_POSITION
++            (dataLocal & BORROW_CAP_MASK) >> BORROW_CAP_START_BIT_POSITION,
++            (dataLocal & SUPPLY_CAP_MASK) >> SUPPLY_CAP_START_BIT_POSITION
+         );
+     }
+ }
+",
+  "settings": "Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,21 +1,19 @@
+ {
+   "remappings": [
+-    "@openzeppelin/contracts-upgradeable/=lib/aave-v3-origin-private/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
+-    "@openzeppelin/contracts/=lib/aave-v3-origin-private/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+-    "aave-v3-origin/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/",
+-    "aave-v3-origin-test/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/test/",
++    "@openzeppelin/contracts-upgradeable/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
++    "@openzeppelin/contracts/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
++    "aave-v3-origin/=lib/aave-v3-origin/src/",
++    "aave-v3-origin-tests/=lib/aave-v3-origin/tests/",
+     "ds-test/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/forge-std/lib/ds-test/src/",
+-    "erc4626-tests/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
++    "erc4626-tests/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
+     "forge-std/=lib/forge-std/src/",
+-    "openzeppelin-contracts-upgradeable/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+-    "openzeppelin-contracts/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
+-    "solidity-utils/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/lib/solidity-utils/src/",
++    "openzeppelin-contracts-upgradeable/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
++    "openzeppelin-contracts/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
++    "solidity-utils/=lib/aave-v3-origin/lib/solidity-utils/src/",
+     "aave-address-book/=lib/aave-helpers/lib/aave-address-book/src/",
+     "aave-helpers/=lib/aave-helpers/",
+-    "aave-v3-core/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/core/",
+-    "aave-v3-origin-tests/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/tests/",
+-    "aave-v3-periphery/=lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/periphery/"
++    "halmos-cheatcodes/=lib/aave-v3-origin/lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
+   ],
+   "optimizer": {
+     "enabled": true,
+     "runs": 200
+@@ -39,30 +37,30 @@
+   },
+   "evmVersion": "shanghai",
+   "viaIR": false,
+   "libraries": {
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0x4c52FE2162200bf26c314d7bbd8611699139d553"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
++      "BorrowLogic": "0x62325c94E1c49dcDb5937726aB5D8A4c37bCAd36"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/BridgeLogic.sol": {
+-      "BridgeLogic": "0x97dCbFaE5372A63128F141E8C0BC2c871Ca5F604"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/BridgeLogic.sol": {
++      "BridgeLogic": "0x621Ef86D8A5C693a06295BC288B95C12D4CE4994"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x3a593A622754ed9572599D33Aad6D799B0899Fae"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
++      "ConfiguratorLogic": "0x09e88e877B39D883BAFd46b65E7B06CC56963041"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0x88F864670De467aA73CD45325F9652C578C8AB85"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/EModeLogic.sol": {
++      "EModeLogic": "0xC31d2362fAeD85dF79d0bec99693D0EB0Abd3f74"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0xb32381feFFF45eE9F47fD2f2cF83C832637d6EF0"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
++      "FlashLoanLogic": "0x34039100cc9584Ae5D741d322e16d0d18CEE8770"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0x80d16970B31243Fe67DaB028115f3E4c3E3510Ad"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
++      "LiquidationLogic": "0x4731bF01583F991278692E8727d0700a00A1fBBf"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0xA58FB47bE9074828215A173564C0CD10f6F249bf"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/PoolLogic.sol": {
++      "PoolLogic": "0xf8C97539934ee66a67C26010e8e027D77E821B0C"
+     },
+-    "lib/aave-helpers/lib/aave-address-book/lib/aave-v3-origin/src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x2b22E425C1322fbA0DbF17bb1dA25d71811EE7ba"
++    "lib/aave-v3-origin/src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
++      "SupplyLogic": "0x185477906B46D9b8DE0DEB73A1bBfb87b5b51BC3"
+     }
+   }
+ }
+\\ No newline at end of file
+",
+}
+`;

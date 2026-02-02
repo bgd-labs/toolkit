@@ -1,0 +1,347 @@
+# Code Diffing [Compare contract source code across versions]
+
+The `diffCode` utility allows you to compare two versions of smart contract source code, making it easy to identify what has changed between contract versions or upgrades.
+
+## Overview
+
+When analyzing contract upgrades or comparing implementations, you need to understand what changed. The `diffCode` function:
+
+- Compares contract source files from two `StandardJsonInput` objects
+- Automatically formats code with Prettier for consistent comparison
+- Handles renamed files intelligently by finding the most similar content
+- Shows additions, deletions, and modifications
+- Returns unified diff format for easy reading
+
+## Basic Usage
+
+```ts twoslash
+import { diffCode } from "@bgd-labs/toolbox";
+
+const beforeSource = {
+  language: "Solidity",
+  sources: {
+    "Contract.sol": {
+      content: `
+        contract MyContract {
+          uint256 public value;
+          
+          function setValue(uint256 _value) public {
+            value = _value;
+          }
+        }
+      `,
+    },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const afterSource = {
+  language: "Solidity",
+  sources: {
+    "Contract.sol": {
+      content: `
+        contract MyContract {
+          uint256 public value;
+          address public owner;
+          
+          function setValue(uint256 _value) public {
+            require(msg.sender == owner, "Not owner");
+            value = _value;
+          }
+        }
+      `,
+    },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const changes = await diffCode(beforeSource, afterSource);
+// Returns an object with file names as keys and diff strings as values
+```
+
+## With Explorer Integration
+
+Combine with `getSourceCode` to compare deployed contracts:
+
+```ts twoslash
+import {
+  diffCode,
+  getSourceCode,
+  parseEtherscanStyleSourceCode,
+  ChainId,
+} from "@bgd-labs/toolbox";
+
+// Get source code for two contract versions
+const oldImplementation = await getSourceCode({
+  chainId: ChainId.mainnet,
+  address: "0x1111111111111111111111111111111111111111",
+  apiKey: process.env.ETHERSCAN_API_KEY,
+});
+
+const newImplementation = await getSourceCode({
+  chainId: ChainId.mainnet,
+  address: "0x2222222222222222222222222222222222222222",
+  apiKey: process.env.ETHERSCAN_API_KEY,
+});
+
+// Parse the source code
+const oldSource = parseEtherscanStyleSourceCode(oldImplementation.SourceCode);
+const newSource = parseEtherscanStyleSourceCode(newImplementation.SourceCode);
+
+// Get the diff
+const changes = await diffCode(oldSource, newSource);
+
+// Display changes
+for (const [fileName, diff] of Object.entries(changes)) {
+  console.log(`\n=== ${fileName} ===`);
+  console.log(diff);
+}
+```
+
+## Understanding the Output
+
+The function returns an object where:
+
+- **Keys**: File names (simplified, without full paths)
+- **Values**: Unified diff strings in standard patch format
+
+### Diff Format
+
+```diff
+--- Contract.sol
++++ Contract.sol
+@@ -2,6 +2,7 @@
+ contract MyContract {
+   uint256 public value;
++  address public owner;
+
+   function setValue(uint256 _value) public {
++    require(msg.sender == owner, "Not owner");
+     value = _value;
+```
+
+Lines starting with:
+
+- `-` were removed
+- `+` were added
+- (no prefix) are context lines (unchanged)
+
+## Handling Settings Changes
+
+The function also detects compiler settings changes:
+
+```ts twoslash
+import { diffCode } from "@bgd-labs/toolbox";
+
+const before = {
+  language: "Solidity",
+  sources: { "Contract.sol": { content: "contract A {}" } },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const after = {
+  language: "Solidity",
+  sources: { "Contract.sol": { content: "contract A {}" } },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const changes = await diffCode(before, after);
+// Will include a "settings" key showing the settings diff
+```
+
+## Smart File Matching
+
+When file paths change but content is similar, the function intelligently matches files:
+
+```ts twoslash
+import { diffCode } from "@bgd-labs/toolbox";
+
+const before = {
+  language: "Solidity",
+  sources: {
+    "contracts/v1/Token.sol": {
+      content: "contract Token { uint256 public totalSupply; }",
+    },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const after = {
+  language: "Solidity",
+  sources: {
+    "contracts/v2/Token.sol": {
+      content:
+        "contract Token { uint256 public totalSupply; uint256 public decimals; }",
+    },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const changes = await diffCode(before, after);
+// Matches files by name (Token.sol) and shows the diff
+// Even though the paths are different
+```
+
+## Detecting Additions and Removals
+
+```ts twoslash
+import { diffCode } from "@bgd-labs/toolbox";
+
+const before = {
+  language: "Solidity",
+  sources: {
+    "Token.sol": { content: "contract Token {}" },
+    "OldHelper.sol": { content: "contract OldHelper {}" },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const after = {
+  language: "Solidity",
+  sources: {
+    "Token.sol": { content: "contract Token {}" },
+    "NewHelper.sol": { content: "contract NewHelper {}" },
+  },
+  libraries: {},
+  settings: {
+    evmVersion: "paris",
+    optimizer: { enabled: true, runs: 200 },
+  },
+};
+
+const changes = await diffCode(before, after);
+// changes["OldHelper.sol"] will show complete removal
+// changes["NewHelper.sol"] will show complete addition
+```
+
+## Practical Example: Upgrade Analysis
+
+```ts twoslash
+import {
+  diffCode,
+  getSourceCode,
+  parseEtherscanStyleSourceCode,
+  ChainId,
+} from "@bgd-labs/toolbox";
+import { readContract } from "viem/actions";
+import { getClient } from "@bgd-labs/toolbox";
+
+async function analyzeProxyUpgrade(
+  proxyAddress: string,
+  chainId: number,
+  oldBlockNumber: bigint,
+  newBlockNumber: bigint,
+) {
+  const client = getClient(chainId);
+
+  // Get old implementation
+  const oldImpl = await readContract(client, {
+    address: proxyAddress as `0x${string}`,
+    abi: [
+      {
+        name: "implementation",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ type: "address" }],
+      },
+    ],
+    functionName: "implementation",
+    blockNumber: oldBlockNumber,
+  });
+
+  // Get new implementation
+  const newImpl = await readContract(client, {
+    address: proxyAddress as `0x${string}`,
+    abi: [
+      {
+        name: "implementation",
+        type: "function",
+        stateMutability: "view",
+        inputs: [],
+        outputs: [{ type: "address" }],
+      },
+    ],
+    functionName: "implementation",
+    blockNumber: newBlockNumber,
+  });
+
+  // Fetch and parse source code
+  const oldSource = await getSourceCode({
+    chainId,
+    address: oldImpl as `0x${string}`,
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  });
+
+  const newSource = await getSourceCode({
+    chainId,
+    address: newImpl as `0x${string}`,
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  });
+
+  const oldParsed = parseEtherscanStyleSourceCode(oldSource.SourceCode);
+  const newParsed = parseEtherscanStyleSourceCode(newSource.SourceCode);
+
+  // Generate diff
+  const changes = await diffCode(oldParsed, newParsed);
+
+  return {
+    oldImplementation: oldImpl,
+    newImplementation: newImpl,
+    changes,
+  };
+}
+
+// Usage
+const analysis = await analyzeProxyUpgrade(
+  "0xProxyAddress",
+  ChainId.mainnet,
+  18000000n,
+  19000000n,
+);
+
+console.log("Files changed:", Object.keys(analysis.changes).length);
+```
+
+## Peer Dependencies
+
+This function requires Prettier and the Solidity plugin:
+
+```bash
+npm install prettier prettier-plugin-solidity
+```
+
+## Tips
+
+- **Code Formatting**: All code is formatted with Prettier before comparison for consistent diffs
+- **Performance**: Large contracts may take a few seconds to format and compare
+- **File Matching**: Files with the same name are matched, then compared by content similarity
+- **Empty Diffs**: If no changes are detected, the file won't appear in the output

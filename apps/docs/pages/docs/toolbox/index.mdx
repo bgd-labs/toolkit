@@ -1,0 +1,123 @@
+# Toolbox Overview [Comprehensive utilities for web3 development]
+
+The `@bgd-labs/toolbox` package provides a comprehensive collection of utilities for working with Ethereum, Aave, and other web3 protocols. It includes tools for mathematical operations, ecosystem integrations, protocol-specific helpers, and more.
+
+## Key Features
+
+### 🧮 Math Utilities
+- **Binary Operations**: Work with bitmaps and bit ranges for efficient data manipulation
+- **Storage Slots**: Calculate Solidity storage slots for mappings and arrays
+
+### 🏦 Aave Protocol
+- **Ray Math**: JavaScript implementation of Aave's WadRayMath library
+- **Pool Math**: Interest rate calculations and health factor computations
+- **Reserve Configuration**: Decode tightly packed reserve configurations
+- **User Configuration**: Parse user's collateral and borrowing positions
+
+### 🌐 Ecosystem Tools
+- **RPC Management**: Smart RPC selection across multiple providers (Alchemy, Quicknode, public RPCs)
+- **Explorer Integration**: Unified interface for Etherscan, Routescan, and Blockscout
+- **Tenderly**: Simulation and virtual network management
+- **Flashbots**: MEV-Share integration and bundle submission
+- **IPFS**: Content hashing utilities
+
+### 🔍 Operations
+- **Code Diffing**: Compare contract source code across versions
+- **Log Indexing**: Generic event log indexer with state management
+- **State Analysis**: Parse and enhance Tenderly state diffs
+
+### 🛡️ Seatbelt (Testing & Verification)
+- **Log Enhancement**: Decode and format event logs with asset information
+- **State Diff Reporting**: Generate readable reports from state changes
+- **Verified Contracts**: Check contract verification status
+- **Tenderly Reports**: Generate comprehensive simulation reports
+
+## Installation
+
+:::code-group
+
+```bash [npm]
+npm i @bgd-labs/toolbox
+```
+
+```bash [pnpm]
+pnpm i @bgd-labs/toolbox
+```
+
+```bash [bun]
+bun i @bgd-labs/toolbox
+```
+
+:::
+
+## Quick Start
+
+```ts
+import {
+  // Math utilities
+  bitmapToIndexes,
+  getBits,
+  setBits,
+  
+  // Aave helpers
+  rayMul,
+  rayDiv,
+  decodeReserveConfiguration,
+  decodeUserConfiguration,
+  calculateHealthFactor,
+  
+  // Ecosystem tools
+  getClient,
+  getRPCUrl,
+  getExplorer,
+  getSourceCode,
+  
+  // Chain IDs
+  ChainId,
+} from "@bgd-labs/toolbox";
+
+// Work with bitmaps
+const indexes = bitmapToIndexes(0b1011n); // [0, 1, 3]
+
+// Get RPC client
+const client = getClient(ChainId.mainnet, {
+  providerConfig: {
+    alchemyKey: process.env.ALCHEMY_KEY,
+  },
+});
+
+// Aave math
+const result = rayMul(1000000000000000000000000000n, 2000000000000000000000000000n);
+```
+
+## Module Organization
+
+The package is organized into several focused modules:
+
+- **`/aave`** - Aave protocol-specific utilities
+- **`/math`** - Mathematical operations and encoding/decoding
+- **`/ecosystem`** - Blockchain ecosystem integrations
+- **`/operations`** - Higher-level operations like diffing and indexing
+- **`/seatbelt`** - Testing and verification helpers
+- **`/abis`** - Common ABIs for protocol interactions
+
+## Browser vs Node
+
+The package provides different entry points for browser and Node.js environments:
+
+- **Browser**: `@bgd-labs/toolbox` (excludes Node-specific features)
+- **Node**: `@bgd-labs/toolbox/node` (includes all features)
+
+Most utilities work in both environments, but some Node-specific features (like Foundry integration) are only available in the Node build.
+
+## TypeScript Support
+
+The package is written in TypeScript and provides full type definitions. All functions are strongly typed with detailed JSDoc comments for better IDE support.
+
+## Further Reading
+
+Explore the documentation for specific modules:
+
+- [Aave Utilities](/docs/toolbox/aave/user)
+- [Math Operations](/docs/toolbox/math/binary)
+- [Ecosystem Tools](/docs/toolbox/ecosystem)

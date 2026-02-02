@@ -1,0 +1,29 @@
+{
+  "name": "@bgd-labs/docs",
+  "description": "A cenralized place with docs for all the bgd-labs projects",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vocs build",
+    "start": "vocs start ",
+    "dev": "vocs dev",
+    "lint": "next lint",
+    "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf .next"
+  },
+  "dependencies": {
+    "@bgd-labs/toolbox": "workspace:*",
+    "viem": "catalog:",
+    "vocs": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

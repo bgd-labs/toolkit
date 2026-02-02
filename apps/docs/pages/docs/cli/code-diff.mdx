@@ -1,0 +1,266 @@
+# CodeDiff [Utilities for diffing code]
+
+In regards to upgreadability and even immutable multichain deployments it is fundamental to understand nuances between code deployed on different chains.
+Therefore we maintain some tooling to diff onchain contracts to improve visibility of certain changes.
+
+## Options
+
+```sh
+Usage: @bgd-labs/cli codeDiff [options]
+
+generated the diff between any two addresses
+
+Options:
+  --address1 <address>
+  --chainId1 <number>
+  --address2 <address>
+  --chainId2 <number>
+  -f, --flatten
+  -o, --output <format>   (choices: "stdout", "file", default: "stdout")
+  -p, --path <path>       (default: "./diffs/code")
+```
+
+## Example
+
+This is how one could diff the AToken implementation between `Linea` and `Sonic` Aave deployments.
+
+```sh
+npx @bgd-labs/cli codeDiff --address1 0x589750BA8aF186cE5B55391B0b7148cAD43a1619 \
+             --chainId1 59144 \
+             --address2 0x91FC11136d5615575a0fC5981Ab5C0C54418E2C6 \
+             --chainId2 146
+```
+
+```diff
+Index: settings
+===================================================================
+--- settings
++++ settings
+@@ -1,16 +1,15 @@
+ {
+   "remappings": [
+-    "aave-v3-core/=src/core/",
+-    "aave-v3-periphery/=src/periphery/",
+     "solidity-utils/=lib/solidity-utils/src/",
+     "forge-std/=lib/forge-std/src/",
+     "ds-test/=lib/forge-std/lib/ds-test/src/",
+     "openzeppelin-contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/",
+     "openzeppelin-contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/",
+     "@openzeppelin/contracts-upgradeable/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/contracts/",
+     "@openzeppelin/contracts/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/openzeppelin-contracts/contracts/",
+-    "erc4626-tests/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/"
++    "erc4626-tests/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/erc4626-tests/",
++    "halmos-cheatcodes/=lib/solidity-utils/lib/openzeppelin-contracts-upgradeable/lib/halmos-cheatcodes/src/"
+   ],
+   "optimizer": {
+     "enabled": true,
+     "runs": 200
+@@ -31,33 +30,33 @@
+         "abi"
+       ]
+     }
+   },
+-  "evmVersion": "london",
++  "evmVersion": "shanghai",
+   "viaIR": false,
+   "libraries": {
+     "src/contracts/protocol/libraries/logic/BorrowLogic.sol": {
+-      "BorrowLogic": "0xbFEDA4cC9184727Ac7546Ce529D306bB5CffcB4F"
++      "BorrowLogic": "0x62325c94E1c49dcDb5937726aB5D8A4c37bCAd36"
+     },
+     "src/contracts/protocol/libraries/logic/BridgeLogic.sol": {
+-      "BridgeLogic": "0x3f399651Fc3FE274F7754Bb240BC80e096c0d1c5"
++      "BridgeLogic": "0x621Ef86D8A5C693a06295BC288B95C12D4CE4994"
+     },
+     "src/contracts/protocol/libraries/logic/ConfiguratorLogic.sol": {
+-      "ConfiguratorLogic": "0x1C39F5E734625F34eAf11a8B43c71DAB832936b5"
++      "ConfiguratorLogic": "0x09e88e877B39D883BAFd46b65E7B06CC56963041"
+     },
+     "src/contracts/protocol/libraries/logic/EModeLogic.sol": {
+-      "EModeLogic": "0x848eD9932047Fae0baf74d645450018F424A4367"
++      "EModeLogic": "0xC31d2362fAeD85dF79d0bec99693D0EB0Abd3f74"
+     },
+     "src/contracts/protocol/libraries/logic/FlashLoanLogic.sol": {
+-      "FlashLoanLogic": "0x6990DFae5c227F1aC5D486b1AC0eecAcC2B3e68d"
++      "FlashLoanLogic": "0x34039100cc9584Ae5D741d322e16d0d18CEE8770"
+     },
+     "src/contracts/protocol/libraries/logic/LiquidationLogic.sol": {
+-      "LiquidationLogic": "0xB84A9FBa16902e990EbCb63A22bB46996E9CfABe"
++      "LiquidationLogic": "0x4731bF01583F991278692E8727d0700a00A1fBBf"
+     },
+     "src/contracts/protocol/libraries/logic/PoolLogic.sol": {
+-      "PoolLogic": "0x7Cc1def95a7eCfb5afF91425D5e828802A8d914E"
++      "PoolLogic": "0xf8C97539934ee66a67C26010e8e027D77E821B0C"
+     },
+     "src/contracts/protocol/libraries/logic/SupplyLogic.sol": {
+-      "SupplyLogic": "0x3c012c5d3Be847F46a1428A3Bc53d70dFe691194"
++      "SupplyLogic": "0x185477906B46D9b8DE0DEB73A1bBfb87b5b51BC3"
+     }
+   }
+ }
+\ No newline at end of file
+Index: src/contracts/interfaces/IPool.sol
+===================================================================
+--- src/contracts/interfaces/IPool.sol
++++ src/contracts/interfaces/IPool.sol
+@@ -204,15 +204,39 @@
+         uint256 variableBorrowIndex
+     );
+
+     /**
++     * @dev Emitted when the deficit of a reserve is covered.
++     * @param reserve The address of the underlying asset of the reserve
++     * @param caller The caller that triggered the DeficitCovered event
++     * @param amountCovered The amount of deficit covered
++     */
++    event DeficitCovered(
++        address indexed reserve,
++        address caller,
++        uint256 amountCovered
++    );
++
++    /**
+      * @dev Emitted when the protocol treasury receives minted aTokens from the accrued interest.
+      * @param reserve The address of the reserve
+      * @param amountMinted The amount minted to the treasury
+      */
+     event MintedToTreasury(address indexed reserve, uint256 amountMinted);
+
+     /**
++     * @dev Emitted when deficit is realized on a liquidation.
++     * @param user The user address where the bad debt will be burned
++     * @param debtAsset The address of the underlying borrowed asset to be burned
++     * @param amountCreated The amount of deficit created
++     */
++    event DeficitCreated(
++        address indexed user,
++        address indexed debtAsset,
++        uint256 amountCreated
++    );
++
++    /**
+      * @notice Mints an `amount` of aTokens to the `onBehalfOf`
+      * @param asset The address of the underlying asset to mint
+      * @param amount The amount to mint
+      * @param onBehalfOf The address that will receive the aTokens
+@@ -600,18 +624,8 @@
+         address asset
+     ) external view returns (DataTypes.ReserveDataLegacy memory);
+
+     /**
+-     * @notice Returns the state and configuration of the reserve, including extra data included with Aave v3.1
+-     * @dev DEPRECATED use independent getters instead (getReserveData, getLiquidationGracePeriod)
+-     * @param asset The address of the underlying asset of the reserve
+-     * @return The state and configuration data of the reserve with virtual accounting
+-     */
+-    function getReserveDataExtended(
+-        address asset
+-    ) external view returns (DataTypes.ReserveData memory);
+-
+-    /**
+      * @notice Returns the virtual underlying balance of the reserve
+      * @param asset The address of the underlying asset of the reserve
+      * @return The reserve virtual underlying balance
+      */
+@@ -800,9 +814,11 @@
+      * @notice Returns the liquidation grace period of the given asset
+      * @param asset The address of the underlying asset
+      * @return Timestamp when the liquidation grace period will end
+      **/
+-    function getLiquidationGracePeriod(address asset) external returns (uint40);
++    function getLiquidationGracePeriod(
++        address asset
++    ) external view returns (uint40);
+
+     /**
+      * @notice Returns the total fee on flash loans
+      * @return The total fee on flashloans
+@@ -860,8 +876,41 @@
+         uint16 referralCode
+     ) external;
+
+     /**
++     * @notice It covers the deficit of a specified reserve by burning:
++     * - the equivalent aToken `amount` for assets with virtual accounting enabled
++     * - the equivalent `amount` of underlying for assets with virtual accounting disabled (e.g. GHO)
++     * @dev The deficit of a reserve can occur due to situations where borrowed assets are not repaid, leading to bad debt.
++     * @param asset The address of the underlying asset to cover the deficit.
++     * @param amount The amount to be covered, in aToken or underlying on non-virtual accounted assets
++     */
++    function eliminateReserveDeficit(address asset, uint256 amount) external;
++
++    /**
++     * @notice Returns the current deficit of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The current deficit of the reserve
++     */
++    function getReserveDeficit(address asset) external view returns (uint256);
++
++    /**
++     * @notice Returns the aToken address of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The address of the aToken
++     */
++    function getReserveAToken(address asset) external view returns (address);
++
++    /**
++     * @notice Returns the variableDebtToken address of a reserve.
++     * @param asset The address of the underlying asset of the reserve
++     * @return The address of the variableDebtToken
++     */
++    function getReserveVariableDebtToken(
++        address asset
++    ) external view returns (address);
++
++    /**
+      * @notice Gets the address of the external FlashLoanLogic
+      */
+     function getFlashLoanLogic() external view returns (address);
+
+Index: src/contracts/protocol/libraries/helpers/Errors.sol
+===================================================================
+--- src/contracts/protocol/libraries/helpers/Errors.sol
++++ src/contracts/protocol/libraries/helpers/Errors.sol
+@@ -100,5 +100,9 @@
+     string public constant LIQUIDATION_GRACE_SENTINEL_CHECK_FAILED = "97"; // 'Liquidation grace sentinel validation failed'
+     string public constant INVALID_GRACE_PERIOD = "98"; // Grace period above a valid range
+     string public constant INVALID_FREEZE_STATE = "99"; // Reserve is already in the passed freeze state
+     string public constant NOT_BORROWABLE_IN_EMODE = "100"; // Asset not borrowable in eMode
++    string public constant CALLER_NOT_UMBRELLA = "101"; // The caller of the function is not the umbrella contract
++    string public constant RESERVE_NOT_IN_DEFICIT = "102"; // The reserve is not in deficit
++    string public constant MUST_NOT_LEAVE_DUST = "103"; // Below a certain threshold liquidators need to take the full position
++    string public constant USER_CANNOT_HAVE_DEBT = "104"; // Thrown when a user tries to interact with a method that requires a position without debt
+ }
+Index: src/contracts/protocol/libraries/types/DataTypes.sol
+===================================================================
+--- src/contracts/protocol/libraries/types/DataTypes.sol
++++ src/contracts/protocol/libraries/types/DataTypes.sol
+@@ -49,10 +49,11 @@
+         //variable borrow index. Expressed in ray
+         uint128 variableBorrowIndex;
+         //the current variable borrow rate. Expressed in ray
+         uint128 currentVariableBorrowRate;
+-        // DEPRECATED on v3.2.0
+-        uint128 __deprecatedStableBorrowRate;
++        /// @notice reused `__deprecatedStableBorrowRate` storage from pre 3.2
++        // the current accumulate deficit in underlying tokens
++        uint128 deficit;
+         //timestamp of last update
+         uint40 lastUpdateTimestamp;
+         //the id of the reserve. Represents the position in the list of the active reserves
+         uint16 id;
+@@ -216,8 +217,13 @@
+         address oracle;
+         uint8 userEModeCategory;
+     }
+
++    struct ExecuteEliminateDeficitParams {
++        address asset;
++        uint256 amount;
++    }
++
+     struct ExecuteSetUserEModeParams {
+         uint256 reservesCount;
+         address oracle;
+         uint8 categoryId;
+```

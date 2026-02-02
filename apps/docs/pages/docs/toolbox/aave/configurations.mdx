@@ -1,0 +1,279 @@
+# Reserve Configurations [Complete reserve configuration data fetching]
+
+The `getCompleteReserveConfiguration` function provides a comprehensive way to fetch all configuration and state data for an Aave reserve in a single call.
+
+## Overview
+
+When working with Aave reserves, you often need to fetch multiple pieces of data:
+
+- Reserve configuration (LTV, liquidation threshold, caps, etc.)
+- Current interest rates and indexes
+- Token addresses (aToken, debt tokens)
+- Virtual accounting balances
+- Interest rate strategy parameters
+- Total supply metrics
+
+Instead of making multiple separate calls, `getCompleteReserveConfiguration` batches all these requests efficiently into two `Promise.all`.
+When passing a multicall enabled client, this will result in two multicall `eth_call` calls.
+
+## Basic Usage
+
+```ts twoslash
+import { getCompleteReserveConfiguration } from "@bgd-labs/toolbox";
+import { getClient, ChainId } from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const config = await getCompleteReserveConfiguration(
+  client,
+  "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2", // Aave V3 Pool
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+);
+
+console.log("LTV:", config.ltv / 1e4, "%");
+console.log("Liquidation Threshold:", config.liquidationThreshold / 1e4, "%");
+console.log("Supply Cap:", config.supplyCap);
+console.log("Borrow Cap:", config.borrowCap);
+console.log("Reserve Factor:", config.reserveFactor / 1e4, "%");
+```
+
+## Return Type
+
+The function returns an object combining data from multiple sources:
+
+### Reserve Data (from Pool)
+
+```ts
+{
+  // Token addresses
+  aTokenAddress: Address;
+  stableDebtTokenAddress: Address;
+  variableDebtTokenAddress: Address;
+  interestRateStrategyAddress: Address;
+
+  // Indexes (in RAY - 27 decimals)
+  liquidityIndex: bigint;
+  currentLiquidityRate: bigint;
+  variableBorrowIndex: bigint;
+  currentVariableBorrowRate: bigint;
+  currentStableBorrowRate: bigint;
+
+  // Timestamps
+  lastUpdateTimestamp: number;
+
+  // IDs
+  id: number;
+
+  // Packed configuration
+  configuration: {
+    data: bigint;
+  }
+
+  // Additional metrics
+  accruedToTreasury: bigint;
+  unbacked: bigint;
+  isolationModeTotalDebt: bigint;
+}
+```
+
+### Decoded Configuration
+
+```ts
+{
+  // Risk parameters (in basis points: 8000 = 80%)
+  ltv: number;
+  liquidationThreshold: number;
+  liquidationBonus: number;
+
+  // Asset info
+  decimals: number;
+
+  // Status flags
+  active: boolean;
+  frozen: boolean;
+  borrowingEnabled: boolean;
+  paused: boolean;
+  borrowingInIsolation: boolean;
+  siloedBorrowingEnabled: boolean;
+  flashloaningEnabled: boolean;
+  virtualAccountingEnabled: boolean;
+
+  // Caps and limits
+  reserveFactor: number;
+  borrowCap: bigint;
+  supplyCap: bigint;
+  liquidationProtocolFee: number;
+  debtCeiling: bigint;
+}
+```
+
+### Additional Data
+
+```ts
+{
+  // Virtual accounting
+  deficit: bigint;
+  virtualUnderlyingBalance: bigint;
+  liquidationGracePeriod: number;
+
+  // Supply metrics
+  scaledATokenTotalSupply: bigint;
+  scaledVTokenTotalSupply: bigint;
+  availableLiquidity: bigint;
+
+  // Interest rate parameters (in basis points)
+  optimalUsageRatio: number;
+  baseVariableBorrowRate: number;
+  variableRateSlope1: number;
+  variableRateSlope2: number;
+}
+```
+
+## Understanding the Data
+
+### Risk Parameters
+
+```ts
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+// LTV: Maximum loan-to-value for borrowing
+console.log(`Max LTV: ${config.ltv / 1e4}%`);
+
+// Liquidation Threshold: When position can be liquidated
+console.log(`Liquidation at: ${config.liquidationThreshold / 1e4}%`);
+
+// Liquidation Bonus: Discount for liquidators
+console.log(`Liquidation bonus: ${config.liquidationBonus / 1e4 - 1e4}%`);
+```
+
+### Supply and Borrow Caps
+
+```ts
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+// Supply cap (0 = no cap)
+if (config.supplyCap > 0n) {
+  console.log(`Supply cap: ${config.supplyCap} tokens`);
+}
+
+// Borrow cap (0 = no cap)
+if (config.borrowCap > 0n) {
+  console.log(`Borrow cap: ${config.borrowCap} tokens`);
+}
+```
+
+### Interest Rate Parameters
+
+```ts
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+console.log("Interest Rate Strategy:");
+console.log(`- Optimal ratio: ${config.optimalUsageRatio / 1e4}%`);
+console.log(`- Base rate: ${config.baseVariableBorrowRate / 1e4}%`);
+console.log(`- Slope 1: ${config.variableRateSlope1 / 1e4}%`);
+console.log(`- Slope 2: ${config.variableRateSlope2 / 1e4}%`);
+```
+
+### Current Rates and Indexes
+
+```ts
+import { formatUnits } from "viem";
+
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+// Convert RAY (27 decimals) to percentage
+const liquidityAPY = Number(config.currentLiquidityRate) / 1e25;
+const borrowAPY = Number(config.currentVariableBorrowRate) / 1e25;
+
+console.log(`Supply APY: ${liquidityAPY.toFixed(2)}%`);
+console.log(`Borrow APY: ${borrowAPY.toFixed(2)}%`);
+
+// Indexes (in RAY)
+console.log(`Liquidity Index: ${formatUnits(config.liquidityIndex, 27)}`);
+console.log(`Borrow Index: ${formatUnits(config.variableBorrowIndex, 27)}`);
+```
+
+### Utilization Rate
+
+```ts
+import { formatUnits } from "viem";
+
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+// Calculate total supply and borrows
+const totalSupply =
+  (config.scaledATokenTotalSupply * config.liquidityIndex) / 10n ** 27n;
+const totalBorrows =
+  (config.scaledVTokenTotalSupply * config.variableBorrowIndex) / 10n ** 27n;
+
+// Calculate utilization
+const utilization =
+  totalSupply > 0n ? (Number(totalBorrows) / Number(totalSupply)) * 100 : 0;
+
+console.log(`Utilization: ${utilization.toFixed(2)}%`);
+console.log(
+  `Available liquidity: ${formatUnits(config.availableLiquidity, config.decimals)}`,
+);
+```
+
+## Virtual Accounting
+
+Aave V3.1+ uses virtual accounting for certain reserves:
+
+```ts
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+if (config.virtualAccountingEnabled) {
+  console.log("Virtual accounting is enabled");
+  console.log(`Deficit: ${formatUnits(config.deficit, config.decimals)}`);
+  console.log(
+    `Virtual balance: ${formatUnits(config.virtualUnderlyingBalance, config.decimals)}`,
+  );
+}
+```
+
+## Liquidation Grace Period
+
+Some reserves have a liquidation grace period (e.g., for stablecoins):
+
+```ts
+const config = await getCompleteReserveConfiguration(client, pool, reserve);
+
+if (config.liquidationGracePeriod > 0) {
+  const hours = config.liquidationGracePeriod / 3600;
+  console.log(`Liquidation grace period: ${hours} hours`);
+}
+```
+
+## Performance Notes
+
+This function makes 8 contract calls in 2 batches:
+
+1. First batch: 4 calls to the Pool contract
+2. Second batch: 4 calls to token and strategy contracts
+
+The calls are parallelized using `Promise.all()`.
+
+## Type Accuracy
+
+Unlike event emissions where values are often `uint256` or `uint128` (parsed as `bigint`), this function returns properly typed values:
+
+- Numbers with tight bounds (like LTV ≤ 10000) are returned as `number`
+- Large values (like indexes and balances) are returned as `bigint`
+- Boolean flags are returned as `boolean`
+
+This makes the data easier and safer to work with in TypeScript.
+
+## Related Functions
+
+- `decodeReserveConfiguration` - Decode just the packed configuration
+- `getReserveData` - Get basic reserve data from the Pool
+- `getCurrentLiquidityBalance` - Calculate actual balances from scaled balances
+
+## Best Practices
+
+1. **Cache results**: The configuration doesn't change frequently, so cache it
+2. **Batch multiple reserves**: If fetching multiple reserves, do it in parallel
+3. **Check status flags**: Always verify `active` and `frozen` before operations
+4. **Monitor caps**: Check supply/borrow caps to avoid transaction failures
+5. **Use proper decimals**: Always format amounts with the correct `decimals` value

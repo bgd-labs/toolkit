@@ -1,0 +1,40 @@
+# Explorers [Utilities for working with explorers]
+
+## Explorer selection
+
+A lot of our works includes interacting with explorers, but there is no common source of truth for figuring out which explorer to use on which network.
+Therefore we close the gap by exposing a list of explorers available and providing an opinionated `getExplorer(chainId)` method, which returns what we consider to be the "best" explorer for a given chain.
+
+We prioritize explorers the following way:
+
+1. etherscan
+2. routescan
+
+```ts twoslash
+import { getExplorer } from "@bgd-labs/toolbox";
+
+const explorer = getExplorer(1);
+```
+
+## SourceCode
+
+Fetching sourcecode is trivial, processing it it not.
+Etherscan style apis currently always return a `string` - even when the contract was verified via multifile.
+The returned string is then double escaped with `{{` making it painful to work with.
+Therefore we provide some utilities to generate a workable json structure.
+
+```ts twoslash
+import {
+  getSourceCode,
+  parseEtherscanStyleSourceCode,
+} from "@bgd-labs/toolbox";
+
+const source = await getSourceCode({
+  chainId: 1,
+  address: "0x0",
+  apiKey: "ETHERSCAN_API_KEY",
+  apiUrl: "API_URL", // optional
+});
+
+const cleanedSource = parseEtherscanStyleSourceCode(source.SourceCode);
+```

@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+catalog:
+  viem: ^2.45.0
+  typescript: ^5.8.3
+  "@types/node": ^22.15.21
+  tsup: 8.4.0

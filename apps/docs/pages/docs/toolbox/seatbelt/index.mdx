@@ -1,0 +1,378 @@
+# Seatbelt [Testing and verification utilities]
+
+The Seatbelt module provides utilities for enhancing transaction simulations, analyzing state changes, and generating comprehensive reports. These tools are particularly useful when testing governance proposals, protocol upgrades, and complex transactions.
+
+## Overview
+
+Seatbelt utilities help you:
+
+- **Enhance Logs**: Decode and format event logs with asset information
+- **State Diff Analysis**: Transform and enhance Tenderly state diffs
+- **Report Generation**: Create readable markdown reports from state changes
+- **Asset Information**: Automatically fetch and display token symbols and decimals
+
+## Log Enhancement
+
+### Parsing Logs
+
+Decode raw logs using an event database (ABI):
+
+```ts
+import { parseLogs } from "@bgd-labs/toolbox";
+import type { Abi } from "viem";
+
+const eventDb: Abi = [
+  {
+    type: "event",
+    name: "Transfer",
+    inputs: [
+      { name: "from", type: "address", indexed: true },
+      { name: "to", type: "address", indexed: true },
+      { name: "value", type: "uint256", indexed: false },
+    ],
+  },
+];
+
+const logs = [
+  {
+    topics: [
+      "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+    ] as [`0x${string}`],
+    data: "0x0000000000000000000000000000000000000000000000000de0b6b3a7640000",
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" as `0x${string}`,
+  },
+];
+
+const decoded = parseLogs({ logs, eventDb });
+// Logs are now decoded with eventName and args
+```
+
+### Enhancing Logs
+
+Add human-readable formatting and asset information:
+
+```ts
+import { enhanceLogs, getClient, ChainId } from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const logs = [
+  {
+    topics: [] as [`0x${string}`],
+    data: "0x",
+    address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48" as `0x${string}`,
+    eventName: "Transfer",
+    args: {
+      from: "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb",
+      to: "0xRecipient",
+      value: 1000000n, // 1 USDC (6 decimals)
+    },
+  },
+];
+
+const enhanced = await enhanceLogs(client, logs);
+// args.value is now "1.000000 USDC" (human-readable)
+// asset addresses are now "0x... (USDC)"
+```
+
+### Supported Events
+
+The `enhanceLogs` function recognizes and formats:
+
+- **Transfer, Approval, Burn, Mint**: Formats amounts with correct decimals
+- **ReserveDataUpdated**: Formats indexes (27 decimals) and rates
+- **Supply, Withdraw, Deposit**: Formats amounts with asset decimals
+- **ReserveFactorChanged**: Formats as percentage
+
+## State Diff Analysis
+
+### Transform Tenderly State Diff
+
+Convert Tenderly's state diff format to a more usable structure:
+
+```ts
+import { transformTenderlyStateDiff } from "@bgd-labs/toolbox";
+
+// State diff from Tenderly simulation
+const tenderlyDiff = [
+  {
+    soltype: {
+      name: "totalSupply",
+      type: "uint256",
+      simple_type: "uint256",
+    },
+    original: "1000000000000000000",
+    dirty: "2000000000000000000",
+    raw: [
+      {
+        address: "0xTokenAddress",
+        key: "0x0",
+        original: "1000000000000000000",
+        dirty: "2000000000000000000",
+      },
+    ],
+  },
+];
+
+const transformed = transformTenderlyStateDiff(tenderlyDiff);
+// Returns: { [address]: Change[] }
+// Organized by contract address with all changes
+```
+
+### Enhance State Diff
+
+Add context-aware formatting to state changes:
+
+```ts
+import { enhanceStateDiff, getClient, ChainId } from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const changes = {
+  "0xPoolAddress": [
+    {
+      type: "mapping (address => uint256)",
+      name: "_reserves",
+      before: { configuration: { data: "12345" } },
+      after: { configuration: { data: "67890" } },
+      key: "0xAssetAddress",
+    },
+  ],
+};
+
+const enhanced = await enhanceStateDiff(client, changes);
+// Reserve configurations are decoded
+// Asset addresses show symbols
+// Amounts are formatted with decimals
+```
+
+### Generate Markdown Report
+
+Create a readable markdown report from state changes:
+
+```ts
+import { renderMarkdownStateDiffReport } from "@bgd-labs/toolbox";
+
+const changes = {
+  "0xContract1": [
+    {
+      name: "totalSupply",
+      type: "uint256",
+      before: "1000000",
+      after: "2000000",
+      key: "",
+    },
+  ],
+};
+
+const getContractName = (address) => {
+  if (address === "0xContract1") return "Token Contract";
+  return address;
+};
+
+const markdown = renderMarkdownStateDiffReport(changes, getContractName);
+// Returns formatted markdown with diff syntax
+```
+
+## Complete Example: Proposal Analysis
+
+Analyze a governance proposal execution:
+
+```ts
+import {
+  tenderly_sim,
+  transformTenderlyStateDiff,
+  enhanceStateDiff,
+  renderMarkdownStateDiffReport,
+  parseLogs,
+  enhanceLogs,
+  getClient,
+  ChainId,
+} from "@bgd-labs/toolbox";
+import type { Abi } from "viem";
+
+const client = getClient(ChainId.mainnet);
+
+const tenderlyConfig = {
+  accountSlug: process.env.TENDERLY_ACCOUNT!,
+  projectSlug: process.env.TENDERLY_PROJECT!,
+  accessToken: process.env.TENDERLY_ACCESS_TOKEN!,
+};
+
+async function analyzeProposal(proposalCalldata: string) {
+  // Simulate the proposal execution
+  const simulation = await tenderly_sim(tenderlyConfig, {
+    network_id: ChainId.mainnet.toString(),
+    from: "0xGovernanceExecutor",
+    to: "0xProposalTarget",
+    input: proposalCalldata,
+    save: true,
+  });
+
+  // Parse and enhance logs
+  const eventDb: Abi = []; // Your event ABIs
+  const parsedLogs = parseLogs({
+    logs: simulation.transaction.transaction_info.logs,
+    eventDb,
+  });
+  const enhancedLogs = await enhanceLogs(client, parsedLogs);
+
+  // Transform and enhance state diff
+  const stateDiff = transformTenderlyStateDiff(
+    simulation.transaction.transaction_info.state_diff,
+  );
+  const enhancedStateDiff = await enhanceStateDiff(client, stateDiff);
+
+  // Generate report
+  const contractNames: Record<string, string> = {
+    "0xPoolAddress": "Aave V3 Pool",
+    "0xTokenAddress": "USDC Token",
+  };
+
+  const report = renderMarkdownStateDiffReport(
+    enhancedStateDiff,
+    (addr) => contractNames[addr] || addr,
+  );
+
+  return {
+    success: simulation.transaction.status,
+    gasUsed: simulation.transaction.gas_used,
+    logs: enhancedLogs,
+    stateChanges: enhancedStateDiff,
+    report,
+  };
+}
+
+// Usage
+const analysis = await analyzeProposal("0x...");
+console.log(analysis.report);
+```
+
+## Utility Functions
+
+### Find Asset Information
+
+Get token symbol and decimals:
+
+```ts
+import { findAsset, getClient, ChainId } from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const asset = await findAsset(
+  client,
+  "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48", // USDC
+);
+// Returns: { symbol: "USDC", decimals: 6, address: "0x..." }
+```
+
+### Prettify Numbers
+
+Format numbers with proper decimals:
+
+```ts
+import { prettifyNumber } from "@bgd-labs/toolbox";
+
+const formatted = prettifyNumber({
+  value: 1234567890n,
+  decimals: 6,
+  showDecimals: true,
+  suffix: " USDC",
+});
+// Returns: "1234.567890 USDC"
+```
+
+### Asset Index to Address
+
+Convert Aave reserve indexes to addresses:
+
+```ts
+import { assetIndexesToAsset, getClient, ChainId } from "@bgd-labs/toolbox";
+
+const client = getClient(ChainId.mainnet);
+
+const assets = await assetIndexesToAsset(
+  client,
+  "0xPoolAddress" as `0x${string}`,
+  [0, 1, 3], // Reserve indexes
+);
+// Returns array of asset addresses
+```
+
+## Best Practices
+
+### 1. Always Enhance Logs and State
+
+```ts
+// ❌ Raw logs are hard to read
+console.log(rawLogs);
+
+// ✅ Enhanced logs show amounts and symbols
+const enhanced = await enhanceLogs(client, parsedLogs);
+console.log(enhanced);
+```
+
+### 2. Use Contract Names in Reports
+
+```ts
+// ❌ Addresses are not user-friendly
+const report = renderMarkdownStateDiffReport(changes);
+
+// ✅ Named contracts are easier to understand
+const report = renderMarkdownStateDiffReport(changes, getContractName);
+```
+
+### 3. Cache Asset Information
+
+```ts
+const assetCache = new Map();
+
+async function getCachedAsset(client: Client, address: Address) {
+  if (!assetCache.has(address)) {
+    assetCache.set(address, await findAsset(client, address));
+  }
+  return assetCache.get(address);
+}
+```
+
+## Testing Workflow
+
+1. **Simulate**: Use Tenderly to simulate the transaction
+2. **Parse**: Decode logs and state diffs
+3. **Enhance**: Add human-readable formatting
+4. **Report**: Generate markdown reports
+5. **Review**: Analyze changes before execution
+
+## Example Output
+
+A typical enhanced state diff report:
+
+```markdown
+#### Aave V3 Pool
+
+\`\`\`diff
+@@ `_reserves` mapping key `0xA0b8...B48 (USDC)` .configuration.liquidationThreshold @@
+
+- 85.00%
+
+* 87.00%
+
+@@ `_reserves` mapping key `0xA0b8...B48 (USDC)` .configuration.ltv @@
+
+- 80.00%
+
+* 82.00%
+  \`\`\`
+
+#### USDC Token
+
+\`\`\`diff
+@@ `totalSupply` uint256 @@
+
+- 1000000.000000 USDC
+
+* 1500000.000000 USDC
+  \`\`\`
+```
+
+This makes it easy to review exactly what changed during a transaction.
