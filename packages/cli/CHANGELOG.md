@@ -1,5 +1,13 @@
 # @bgd-labs/cli
 
+## 0.0.84
+
+### Patch Changes
+
+- 010ca6b: Add repository info
+- Updated dependencies [010ca6b]
+  - @bgd-labs/toolbox@0.2.11
+
 ## 0.0.83
 
 ### Patch Changes
