@@ -1,6 +1,6 @@
 {
   "name": "@bgd-labs/cli",
-  "version": "0.0.81",
+  "version": "0.0.82",
   "main": "./dist/index.mjs",
   "sideEffects": false,
   "license": "MIT",
