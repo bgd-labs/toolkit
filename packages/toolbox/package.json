@@ -6,6 +6,11 @@
   "types": "./dist/index.d.mts",
   "sideEffects": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bgd-labs/toolkit.git",
+    "directory": "packages/toolbox"
+  },
   "files": [
     "dist/**"
   ],

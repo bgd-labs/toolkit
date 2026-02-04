@@ -4,6 +4,11 @@
   "main": "./dist/index.mjs",
   "sideEffects": false,
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bgd-labs/toolkit.git",
+    "directory": "packages/cli"
+  },
   "files": [
     "dist/**",
     "README.md"
