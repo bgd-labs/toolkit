@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.9
+
+### Patch Changes
+
+- d8d550f: Regenerate ecosystem
+
 ## 0.2.8
 
 ### Patch Changes
