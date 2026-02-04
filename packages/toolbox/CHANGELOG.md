@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.10
+
+### Patch Changes
+
+- 1aef7d9: Next try
+
 ## 0.2.9
 
 ### Patch Changes
