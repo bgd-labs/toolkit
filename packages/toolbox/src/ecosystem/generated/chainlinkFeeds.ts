@@ -4153,12 +4153,6 @@ export const chainlinkFeeds = {
       "name": "PHP / USD"
     },
     {
-      "contractAddress": "0x09871EF6eCf97667A11FF467A6DD4D5C5629F1bb",
-      "proxyAddress": "0x2251169D32E7538652a9a8c86bf0c43bFcd956f1",
-      "decimals": 8,
-      "name": "QUICK / USD"
-    },
-    {
       "contractAddress": "0x0BCa9d88c216EB35d34Fd642701cFaFc01cfA28d",
       "proxyAddress": "0x2A5e28b4F9Ecb01807CeEC25F7b0fcCafF3F6721",
       "decimals": 18,
@@ -4357,12 +4351,6 @@ export const chainlinkFeeds = {
       "name": "AAVE / ETH"
     },
     {
-      "contractAddress": "0x40698914C15b07C6daa5a76829Ee6639989b8Edf",
-      "proxyAddress": "0x2e48b7924FBe04d575BA229A59b64547d9da16e9",
-      "decimals": 8,
-      "name": "DPI / USD"
-    },
-    {
       "contractAddress": "0x411c996DbA9b18AAc8BED28Dda2668AFe0B407c9",
       "proxyAddress": "0x4517002fCD31062Ea38680dF9Ee37f29528C2707",
       "decimals": 8,
@@ -4379,12 +4367,6 @@ export const chainlinkFeeds = {
       "proxyAddress": "0x80a5cb83ce268Ed11a6EFC4bBF0beC39dF35Db21",
       "decimals": 8,
       "name": "IDR / USD"
-    },
-    {
-      "contractAddress": "0x46D96A0fd8a884cCB7682A515E733948Aa3E17A7",
-      "proxyAddress": "0x9cb43aa3D036Cb035a694Ba0AAa91f8875B16cE1",
-      "decimals": 8,
-      "name": "GNS / USD"
     },
     {
       "contractAddress": "0x47E2dcB778f429b19e48290058605a3c5B94a3B3",
@@ -4549,12 +4531,6 @@ export const chainlinkFeeds = {
       "name": "LINK / MATIC"
     },
     {
-      "contractAddress": "0x6BB1a2C5C4236De96258579DA6e2203A291784D8",
-      "proxyAddress": "0x5b4586C911144A947D7814Fd71fe0872b8334748",
-      "decimals": 8,
-      "name": "FB / USD"
-    },
-    {
       "contractAddress": "0x6F5bf65435a99EB0077CD9951Cfb391198080fb0",
       "proxyAddress": "0xA338e0492B2F944E9F8C0653D3AD1484f2657a37",
       "decimals": 18,
@@ -4717,12 +4693,6 @@ export const chainlinkFeeds = {
       "name": "USDT / ETH"
     },
     {
-      "contractAddress": "0xAD9d40a33f8E62f53934a36Ac74C44Af6826D79e",
-      "proxyAddress": "0x82C9d4E88862f194C2bd874a106a90dDD0D35AAB",
-      "decimals": 18,
-      "name": "BADGER / ETH"
-    },
-    {
       "contractAddress": "0xB12bCEAD553B559F68E4E1102c77f659D238734B",
       "proxyAddress": "0x9c371aE34509590E10aB98205d2dF5936A1aD875",
       "decimals": 8,
@@ -4783,12 +4753,6 @@ export const chainlinkFeeds = {
       "name": "USDC / ETH"
     },
     {
-      "contractAddress": "0xD5d053cdA4f56e7a1E3275ABc7496D0306529EE4",
-      "proxyAddress": "0x8Ec0eC2e0F26D8253ABf39Db4B1793D76B49C6D5",
-      "decimals": 8,
-      "name": "OGN / USD"
-    },
-    {
       "contractAddress": "0xD76bF1dd66cE111d0BE71A6134cb18d66975a429",
       "proxyAddress": "0x327d9822e9932996f55b39F557AEC838313da8b7",
       "decimals": 8,
@@ -4835,12 +4799,6 @@ export const chainlinkFeeds = {
       "proxyAddress": "0x3710abeb1A0Fc7C2EC59C26c8DAA7a448ff6125A",
       "decimals": 8,
       "name": "SHIB / USD"
-    },
-    {
-      "contractAddress": "0xFDE309545743faDcD64a44A792cbdDE8F5A4d11e",
-      "proxyAddress": "0x9b88d07B2354eF5f4579690356818e07371c7BeD",
-      "decimals": 8,
-      "name": "EURA / USD"
     },
     {
       "contractAddress": "0xFc60685f01ec3E35bfcDB4A704f51513b3738e47",
@@ -4909,12 +4867,6 @@ export const chainlinkFeeds = {
       "name": "ETC / USD"
     },
     {
-      "contractAddress": "0xc5B39252A8490acc7655c564bed93e6Ec6C2455B",
-      "proxyAddress": "0xC70aAF9092De3a4E5000956E672cDf5E996B4610",
-      "decimals": 18,
-      "name": "DPI / ETH"
-    },
-    {
       "contractAddress": "0xc7199a0846bb92cc7c7Cc0539e502580131fEB04",
       "proxyAddress": "0x03Bc6D9EFed65708D35fDaEfb25E87631a0a3437",
       "decimals": 8,
@@ -4973,12 +4925,6 @@ export const chainlinkFeeds = {
       "proxyAddress": "0xb77fa460604b9C6435A235D057F7D319AC83cb53",
       "decimals": 18,
       "name": "LINK / ETH"
-    },
-    {
-      "contractAddress": "0xd49A730354913127D687FB794c4446E7AeFE94AD",
-      "proxyAddress": "0x4205eC5fd179A843caa7B0860a8eC7D980013359",
-      "decimals": 8,
-      "name": "DGB / USD"
     },
     {
       "contractAddress": "0xdADB7f8B44592fAE7F9396DaCCDbe14eF57C8174",

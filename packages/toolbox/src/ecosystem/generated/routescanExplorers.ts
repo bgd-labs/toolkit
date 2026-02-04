@@ -8,10 +8,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/10/etherscan",
     explorer: "10.routescan.io"
   },
-  13: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/13/etherscan",
-    explorer: "13.routescan.io"
-  },
   14: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/14/etherscan",
     explorer: "14.routescan.io"
@@ -80,14 +76,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/357/etherscan",
     explorer: "357.routescan.io"
   },
-  378: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/378/etherscan",
-    explorer: "378.routescan.io"
-  },
-  379: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/379/etherscan",
-    explorer: "379.routescan.io"
-  },
   919: {
     api: "https://api.routescan.io/v2/network/testnet/evm/919/etherscan",
     explorer: "919.routescan.io"
@@ -112,10 +100,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/1135/etherscan",
     explorer: "1135.routescan.io"
   },
-  1216: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/1216/etherscan",
-    explorer: "1216.routescan.io"
-  },
   1234: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/1234/etherscan",
     explorer: "1234.routescan.io"
@@ -124,33 +108,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/1301/etherscan",
     explorer: "1301.routescan.io"
   },
-  1344: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/1344/etherscan",
-    explorer: "1344.routescan.io"
-  },
-  1687: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/1687/etherscan",
-    explorer: "1687.routescan.io"
-  },
-  1853: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/1853/etherscan",
-    explorer: "1853.routescan.io"
-  },
-  1888: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/1888/etherscan",
-    explorer: "1888.routescan.io"
-  },
   1923: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/1923/etherscan",
     explorer: "1923.routescan.io"
-  },
-  2037: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/2037/etherscan",
-    explorer: "2037.routescan.io"
-  },
-  2038: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/2038/etherscan",
-    explorer: "2038.routescan.io"
   },
   2044: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/2044/etherscan",
@@ -159,10 +119,6 @@ export const routescanExplorers = {
   2233: {
     api: "https://api.routescan.io/v2/network/testnet/evm/2233/etherscan",
     explorer: "2233.routescan.io"
-  },
-  2522: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/2522/etherscan",
-    explorer: "2522.routescan.io"
   },
   2786: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/2786/etherscan",
@@ -176,14 +132,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/3012/etherscan",
     explorer: "3012.routescan.io"
   },
-  3084: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/3084/etherscan",
-    explorer: "3084.routescan.io"
-  },
-  3278: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/3278/etherscan",
-    explorer: "3278.routescan.io"
-  },
   3636: {
     api: "https://api.routescan.io/v2/network/testnet/evm/3636/etherscan",
     explorer: "3636.routescan.io"
@@ -191,10 +139,6 @@ export const routescanExplorers = {
   3637: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/3637/etherscan",
     explorer: "3637.routescan.io"
-  },
-  3939: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/3939/etherscan",
-    explorer: "3939.routescan.io"
   },
   3945: {
     api: "https://api.routescan.io/v2/network/testnet/evm/3945/etherscan",
@@ -224,14 +168,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/5000/etherscan",
     explorer: "5000.routescan.io"
   },
-  5039: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/5039/etherscan",
-    explorer: "5039.routescan.io"
-  },
-  5040: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/5040/etherscan",
-    explorer: "5040.routescan.io"
-  },
   5115: {
     api: "https://api.routescan.io/v2/network/testnet/evm/5115/etherscan",
     explorer: "5115.routescan.io"
@@ -248,10 +184,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/6119/etherscan",
     explorer: "6119.routescan.io"
   },
-  6533: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/6533/etherscan",
-    explorer: "6533.routescan.io"
-  },
   6900: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/6900/etherscan",
     explorer: "6900.routescan.io"
@@ -259,14 +191,6 @@ export const routescanExplorers = {
   6911: {
     api: "https://api.routescan.io/v2/network/testnet/evm/6911/etherscan",
     explorer: "6911.routescan.io"
-  },
-  7894: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/7894/etherscan",
-    explorer: "7894.routescan.io"
-  },
-  7979: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/7979/etherscan",
-    explorer: "7979.routescan.io"
   },
   8008: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/8008/etherscan",
@@ -284,17 +208,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/8453/etherscan",
     explorer: "8453.routescan.io"
   },
-  8787: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/8787/etherscan",
-    explorer: "8787.routescan.io"
-  },
   9745: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan",
     explorer: "9745.routescan.io"
-  },
-  10036: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/10036/etherscan",
-    explorer: "10036.routescan.io"
   },
   10507: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/10507/etherscan",
@@ -308,14 +224,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/10850/etherscan",
     explorer: "10850.routescan.io"
   },
-  10888: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/10888/etherscan",
-    explorer: "10888.routescan.io"
-  },
-  11227: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/11227/etherscan",
-    explorer: "11227.routescan.io"
-  },
   12150: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/12150/etherscan",
     explorer: "12150.routescan.io"
@@ -328,33 +236,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/13337/etherscan",
     explorer: "13337.routescan.io"
   },
-  13576: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/13576/etherscan",
-    explorer: "13576.routescan.io"
-  },
-  14174: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/14174/etherscan",
-    explorer: "14174.routescan.io"
-  },
-  16180: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/16180/etherscan",
-    explorer: "16180.routescan.io"
-  },
   17000: {
     api: "https://api.routescan.io/v2/network/testnet/evm/17000/etherscan",
     explorer: "17000.routescan.io"
-  },
-  21024: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/21024/etherscan",
-    explorer: "21024.routescan.io"
-  },
-  21816: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/21816/etherscan",
-    explorer: "21816.routescan.io"
-  },
-  24010: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/24010/etherscan",
-    explorer: "24010.routescan.io"
   },
   27827: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/27827/etherscan",
@@ -368,10 +252,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/28882/etherscan",
     explorer: "28882.routescan.io"
   },
-  33311: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/33311/etherscan",
-    explorer: "33311.routescan.io"
-  },
   34443: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/34443/etherscan",
     explorer: "34443.routescan.io"
@@ -379,6 +259,10 @@ export const routescanExplorers = {
   42161: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/42161/etherscan",
     explorer: "42161.routescan.io"
+  },
+  43111: {
+    api: "https://api.routescan.io/v2/network/mainnet/evm/43111/etherscan",
+    explorer: "43111.routescan.io"
   },
   43113: {
     api: "https://api.routescan.io/v2/network/testnet/evm/43113/etherscan",
@@ -400,17 +284,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/48795/etherscan",
     explorer: "48795.routescan.io"
   },
-  49321: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/49321/etherscan",
-    explorer: "49321.routescan.io"
-  },
   50104: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/50104/etherscan",
     explorer: "50104.routescan.io"
-  },
-  53188: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/53188/etherscan",
-    explorer: "53188.routescan.io"
   },
   53302: {
     api: "https://api.routescan.io/v2/network/testnet/evm/53302/etherscan",
@@ -420,10 +296,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/53935/etherscan",
     explorer: "53935.routescan.io"
   },
-  54414: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/54414/etherscan",
-    explorer: "54414.routescan.io"
-  },
   55197: {
     api: "https://api.routescan.io/v2/network/testnet/evm/55197/etherscan",
     explorer: "55197.routescan.io"
@@ -432,17 +304,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/56288/etherscan",
     explorer: "56288.routescan.io"
   },
-  56400: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/56400/etherscan",
-    explorer: "56400.routescan.io"
-  },
   57073: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/57073/etherscan",
     explorer: "57073.routescan.io"
-  },
-  59409: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/59409/etherscan",
-    explorer: "59409.routescan.io"
   },
   59932: {
     api: "https://api.routescan.io/v2/network/testnet/evm/59932/etherscan",
@@ -452,10 +316,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/61587/etherscan",
     explorer: "61587.routescan.io"
   },
-  62521: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/62521/etherscan",
-    explorer: "62521.routescan.io"
-  },
   62831: {
     api: "https://api.routescan.io/v2/network/testnet/evm/62831/etherscan",
     explorer: "62831.routescan.io"
@@ -464,25 +324,9 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/68414/etherscan",
     explorer: "68414.routescan.io"
   },
-  69696: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/69696/etherscan",
-    explorer: "69696.routescan.io"
-  },
-  70800: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/70800/etherscan",
-    explorer: "70800.routescan.io"
-  },
   76736: {
     api: "https://api.routescan.io/v2/network/testnet/evm/76736/etherscan",
     explorer: "76736.routescan.io"
-  },
-  79554: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/79554/etherscan",
-    explorer: "79554.routescan.io"
-  },
-  79685: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/79685/etherscan",
-    explorer: "79685.routescan.io"
   },
   80008: {
     api: "https://api.routescan.io/v2/network/testnet/evm/80008/etherscan",
@@ -491,10 +335,6 @@ export const routescanExplorers = {
   80069: {
     api: "https://api.routescan.io/v2/network/testnet/evm/80069/etherscan",
     explorer: "80069.routescan.io"
-  },
-  80085: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/80085/etherscan",
-    explorer: "80085.routescan.io"
   },
   80094: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/80094/etherscan",
@@ -520,10 +360,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/88888/etherscan",
     explorer: "88888.routescan.io"
   },
-  96786: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/96786/etherscan",
-    explorer: "96786.routescan.io"
-  },
   97433: {
     api: "https://api.routescan.io/v2/network/testnet/evm/97433/etherscan",
     explorer: "97433.routescan.io"
@@ -531,10 +367,6 @@ export const routescanExplorers = {
   124816: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/124816/etherscan",
     explorer: "124816.routescan.io"
-  },
-  132008: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/132008/etherscan",
-    explorer: "132008.routescan.io"
   },
   167008: {
     api: "https://api.routescan.io/v2/network/testnet/evm/167008/etherscan",
@@ -548,10 +380,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/173750/etherscan",
     explorer: "173750.routescan.io"
   },
-  210815: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/210815/etherscan",
-    explorer: "210815.routescan.io"
-  },
   421614: {
     api: "https://api.routescan.io/v2/network/testnet/evm/421614/etherscan",
     explorer: "421614.routescan.io"
@@ -564,21 +392,17 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/432204/etherscan",
     explorer: "432204.routescan.io"
   },
-  555666: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/555666/etherscan",
-    explorer: "555666.routescan.io"
-  },
   560048: {
     api: "https://api.routescan.io/v2/network/testnet/evm/560048/etherscan",
     explorer: "560048.routescan.io"
   },
-  710420: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/710420/etherscan",
-    explorer: "710420.routescan.io"
-  },
   723107: {
     api: "https://api.routescan.io/v2/network/testnet/evm/723107/etherscan",
     explorer: "723107.routescan.io"
+  },
+  743111: {
+    api: "https://api.routescan.io/v2/network/testnet/evm/743111/etherscan",
+    explorer: "743111.routescan.io"
   },
   763373: {
     api: "https://api.routescan.io/v2/network/testnet/evm/763373/etherscan",
@@ -612,10 +436,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/testnet/evm/13068200/etherscan",
     explorer: "13068200.routescan.io"
   },
-  20241133: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/20241133/etherscan",
-    explorer: "20241133.routescan.io"
-  },
   21000000: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/21000000/etherscan",
     explorer: "21000000.routescan.io"
@@ -627,14 +447,6 @@ export const routescanExplorers = {
   168587773: {
     api: "https://api.routescan.io/v2/network/testnet/evm/168587773/etherscan",
     explorer: "168587773.routescan.io"
-  },
-  420120000: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/420120000/etherscan",
-    explorer: "420120000.routescan.io"
-  },
-  420120001: {
-    api: "https://api.routescan.io/v2/network/testnet/evm/420120001/etherscan",
-    explorer: "420120001.routescan.io"
   },
   420420417: {
     api: "https://api.routescan.io/v2/network/testnet/evm/420420417/etherscan",
