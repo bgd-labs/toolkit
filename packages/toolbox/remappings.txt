@@ -1,1 +1,2 @@
 aave-address-book/=node_modules/@bgd-labs/aave-address-book/src/
+aave-delivery-infrastructure/=node_modules/@aave-dao/aave-delivery-infrastructure/src/

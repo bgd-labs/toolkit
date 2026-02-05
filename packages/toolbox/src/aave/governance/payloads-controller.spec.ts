@@ -1,9 +1,9 @@
 import { describe, it } from "vitest";
+import { GovernanceV3Ethereum } from "@bgd-labs/aave-address-book";
 import { tenderly_createVnet } from "../../ecosystem/tenderly";
 import { makePayloadExecutableOnTestClient } from "./payloads-controller";
-import { GovernanceV3Ethereum } from "@bgd-labs/aave-address-book";
 import { encodeFunctionData, toHex } from "viem";
-import { IPayloadsControllerCore_ABI } from "@bgd-labs/aave-address-book/abis";
+import { IPayloadsController_ABI } from "../../abis";
 
 describe.skipIf(process.env.CI)(
   "payloadsController",
@@ -36,7 +36,7 @@ describe.skipIf(process.env.CI)(
         from: "0xD73a92Be73EfbFcF3854433A5FcbAbF9c1316073",
         to: GovernanceV3Ethereum.PAYLOADS_CONTROLLER,
         input: encodeFunctionData({
-          abi: IPayloadsControllerCore_ABI,
+          abi: IPayloadsController_ABI,
           functionName: "executePayload",
           args: [254],
         }),
