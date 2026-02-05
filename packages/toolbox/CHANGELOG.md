@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.13
+
+### Patch Changes
+
+- cb545aa: Patched build script
+
 ## 0.2.12
 
 ### Patch Changes
