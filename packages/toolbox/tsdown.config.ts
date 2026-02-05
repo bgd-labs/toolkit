@@ -2,29 +2,25 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig([
   {
-    exports: true,
+    exports: false,
     sourcemap: true,
     entry: {
       index: "src/index.ts",
     },
     platform: "node",
     format: ["esm"],
-    dts: {
-      resolve: true,
-    },
+    dts: true,
     clean: true,
   },
   {
-    exports: true,
+    exports: false,
     sourcemap: true,
     entry: {
       browser: "src/browser.ts",
     },
     platform: "browser",
     format: ["esm"],
-    dts: {
-      resolve: true,
-    },
+    dts: true,
     clean: true,
   },
 ]);
