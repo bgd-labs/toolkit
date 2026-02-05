@@ -2,6 +2,7 @@
   "name": "@bgd-labs/toolbox",
   "version": "0.2.12",
   "main": "./dist/index.mjs",
+  "browser": "./dist/browser.mjs",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.mts",
   "sideEffects": false,
