@@ -19,7 +19,6 @@ export * from './IncentivizedERC20';
 export * from './IOwnable';
 export * from './IPausableUpgradeable';
 export * from './IPayloadsController';
-export * from './IPayloadsControllerCore';
 export * from './IPendlePriceCapAdapter';
 export * from './IPool';
 export * from './IPoolAddressesProvider';
