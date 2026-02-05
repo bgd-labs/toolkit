@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.12
+
+### Patch Changes
+
+- a2d13eb: Fixed browser build
+
 ## 0.2.11
 
 ### Patch Changes
