@@ -1,10 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { genericIndexer, IndexerTopicState } from "./indexLogs";
 import { getClient } from "../ecosystem/rpcs";
-import { IPoolConfigurator_ABI } from "@bgd-labs/aave-address-book/abis";
 import { AaveV3Ethereum } from "@bgd-labs/aave-address-book";
 import { getContract } from "viem";
-import { IPool_ABI } from "../abis/IPool";
+import { IPool_ABI, IPoolConfigurator_ABI } from "../abis";
 import { getBlockNumber } from "viem/actions";
 
 describe.skipIf(process.env.CI)("operations:indexLogs", () => {

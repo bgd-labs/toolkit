@@ -7,8 +7,11 @@ import {
   Hex,
   zeroAddress,
 } from "viem";
-import { IAggregatorInterface_ABI, IERC20Metadata_ABI } from "../abis";
-import { IPool_ABI } from "@bgd-labs/aave-address-book/abis";
+import {
+  IAggregatorInterface_ABI,
+  IERC20Metadata_ABI,
+  IPool_ABI,
+} from "../abis";
 import { TenderlySimulationResponse } from "../ecosystem/tenderly.types";
 
 export type AssetInfo = { symbol: string; decimals: number };

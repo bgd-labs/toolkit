@@ -1,4 +1,3 @@
-import { IGovernanceCore_ABI } from "@bgd-labs/aave-address-book/abis";
 import {
   AbiStateMutability,
   Address,
@@ -14,9 +13,10 @@ import {
 import { getBlock, getStorageAt } from "viem/actions";
 import { getSolidityStorageSlotUint } from "../../math/slot";
 import { setBits } from "../../math/binary";
+import { IGovernance_ABI } from "../../abis";
 
 export type Proposal = ContractFunctionReturnType<
-  typeof IGovernanceCore_ABI,
+  typeof IGovernance_ABI,
   AbiStateMutability,
   "getProposal"
 >;
@@ -44,7 +44,7 @@ export const HUMAN_READABLE_PROPOSAL_STATE = {
 };
 
 export type GovernanceContract = GetContractReturnType<
-  typeof IGovernanceCore_ABI,
+  typeof IGovernance_ABI,
   Client
 >;
 
@@ -53,7 +53,7 @@ export function getGovernance<T extends Client>(
   address: Hex,
 ): GovernanceContract {
   return getContract({
-    abi: IGovernanceCore_ABI,
+    abi: IGovernance_ABI,
     client,
     address,
   });

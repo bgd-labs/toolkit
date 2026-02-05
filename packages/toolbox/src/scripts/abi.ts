@@ -40,6 +40,8 @@ const contracts = [
   "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PendlePriceCapAdapter.sol",
   "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PriceCapAdapterBase.sol",
   "node_modules/@bgd-labs/aave-price-feeds/src/contracts/PriceCapAdapterStable.sol",
+  "node_modules/@aave-dao/aave-governance-v3/src/contracts/Governance.sol",
+  "node_modules/@aave-dao/aave-governance-v3/src/contracts/payloads/PayloadsController.sol",
 ];
 
 const extractFileName = (input: string) => {

@@ -1,4 +1,3 @@
-import { IPayloadsControllerCore_ABI } from "@bgd-labs/aave-address-book/abis";
 import {
   AbiStateMutability,
   Address,
@@ -11,10 +10,11 @@ import {
   getContract,
 } from "viem";
 import { getSolidityStorageSlotUint } from "../../math/slot";
+import { IPayloadsController_ABI } from "../../abis";
 import { getBlock } from "viem/actions";
 
 export type Payload = ContractFunctionReturnType<
-  typeof IPayloadsControllerCore_ABI,
+  typeof IPayloadsController_ABI,
   AbiStateMutability,
   "getPayloadById"
 >;
@@ -38,7 +38,7 @@ export const HUMAN_READABLE_PAYLOAD_STATE = {
 };
 
 export type PayloadsControllerContract = GetContractReturnType<
-  typeof IPayloadsControllerCore_ABI,
+  typeof IPayloadsController_ABI,
   Client
 >;
 
@@ -47,7 +47,7 @@ export function getPayloadsController<T extends Client>(
   address: Hex,
 ): PayloadsControllerContract {
   return getContract({
-    abi: IPayloadsControllerCore_ABI,
+    abi: IPayloadsController_ABI,
     client,
     address,
   });

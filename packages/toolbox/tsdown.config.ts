@@ -11,6 +11,7 @@ export default defineConfig([
     format: ["esm"],
     dts: true,
     clean: true,
+    inlineOnly: false,
   },
   {
     exports: false,
@@ -22,5 +23,6 @@ export default defineConfig([
     format: ["esm"],
     dts: true,
     clean: true,
+    inlineOnly: false,
   },
 ]);
