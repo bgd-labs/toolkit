@@ -116,6 +116,10 @@ export const etherscanExplorers = {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://abscan.org/"
   },
+  4326: {
+    api: "https://api.etherscan.io/v2/api",
+    explorer: "https://mega.etherscan.io/"
+  },
   4352: {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://memecorescan.io/"
@@ -135,6 +139,10 @@ export const etherscanExplorers = {
   5611: {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://opbnb-testnet.bscscan.com/"
+  },
+  6342: {
+    api: "https://api.etherscan.io/v2/api",
+    explorer: "https://testnet-mega.etherscan.io/"
   },
   8453: {
     api: "https://api.etherscan.io/v2/api",
@@ -159,10 +167,6 @@ export const etherscanExplorers = {
   14601: {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://testnet.sonicscan.org/"
-  },
-  17000: {
-    api: "https://api.etherscan.io/v2/api",
-    explorer: "https://holesky.etherscan.io/"
   },
   33111: {
     api: "https://api.etherscan.io/v2/api",
