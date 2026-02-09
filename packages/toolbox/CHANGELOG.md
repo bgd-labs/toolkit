@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.15
+
+### Patch Changes
+
+- c6c85c2: Updates megaETH explorer
+
 ## 0.2.14
 
 ### Patch Changes
