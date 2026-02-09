@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.16
+
+### Patch Changes
+
+- a6464cf: Support for webpack
+
 ## 0.2.15
 
 ### Patch Changes
