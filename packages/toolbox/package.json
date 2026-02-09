@@ -67,8 +67,17 @@
     "viem": "catalog:"
   },
   "exports": {
-    ".": "./dist/index.mjs",
-    "./browser": "./dist/browser.mjs",
+    ".": {
+      "types": "./dist/index.d.mts",
+      "browser": "./dist/browser.mjs",
+      "import": "./dist/index.mjs",
+      "default": "./dist/index.mjs"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.mts",
+      "import": "./dist/browser.mjs",
+      "default": "./dist/browser.mjs"
+    },
     "./package.json": "./package.json"
   },
   "engines": {
