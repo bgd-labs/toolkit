@@ -467,6 +467,7 @@ type Vote {
   vp: Float
   vp_by_strategy: [Float]
   vp_state: String
+  vp_value: Float
 }
 
 type Alias {
@@ -580,6 +581,7 @@ type Leaderboard {
   proposalsCount: Int
   votesCount: Int
   lastVote: Int
+  vpValue: Float
 }
 
 type Option {

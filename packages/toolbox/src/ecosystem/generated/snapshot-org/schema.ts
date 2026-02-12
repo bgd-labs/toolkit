@@ -222,6 +222,7 @@ export interface Vote {
     vp: (Scalars['Float'] | null)
     vp_by_strategy: ((Scalars['Float'] | null)[] | null)
     vp_state: (Scalars['String'] | null)
+    vp_value: (Scalars['Float'] | null)
     __typename: 'Vote'
 }
 
@@ -348,6 +349,7 @@ export interface Leaderboard {
     proposalsCount: (Scalars['Int'] | null)
     votesCount: (Scalars['Int'] | null)
     lastVote: (Scalars['Int'] | null)
+    vpValue: (Scalars['Float'] | null)
     __typename: 'Leaderboard'
 }
 
@@ -623,6 +625,7 @@ export interface VoteGenqlSelection{
     vp?: boolean | number
     vp_by_strategy?: boolean | number
     vp_state?: boolean | number
+    vp_value?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }
@@ -762,6 +765,7 @@ export interface LeaderboardGenqlSelection{
     proposalsCount?: boolean | number
     votesCount?: boolean | number
     lastVote?: boolean | number
+    vpValue?: boolean | number
     __typename?: boolean | number
     __scalar?: boolean | number
 }

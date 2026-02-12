@@ -37,7 +37,6 @@ export const alchemyNetworkMap = {
   1868: "soneium-mainnet",
   1946: "soneium-minato",
   2020: "ronin-mainnet",
-  2021: "ronin-saigon",
   2201: "stable-testnet",
   2442: "polygonzkevm-cardona",
   2523: "frax-sepolia",
@@ -97,6 +96,7 @@ export const alchemyNetworkMap = {
   81457: "blast-mainnet",
   84532: "base-sepolia",
   99999: "adi-testnet",
+  202601: "ronin-saigon",
   421614: "arb-sepolia",
   510525: "clankermon-mainnet",
   534351: "scroll-sepolia",
@@ -116,9 +116,7 @@ export const alchemyNetworkMap = {
   351243127: "xmtp-ropsten",
   666666666: "degen-mainnet",
   728126428: "tron-mainnet",
-  994873017: "lumia-prism",
   999999999: "zora-sepolia",
-  2030232745: "lumia-beam",
   3448148188: "tron-testnet",
   "null": "sui-testnet"
 } as const;

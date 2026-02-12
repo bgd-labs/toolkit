@@ -31,7 +31,6 @@ export const hyperRPCSupportedNetworks = [
   1328,
   1329,
   1750,
-  1776,
   1868,
   1923,
   2741,
@@ -85,5 +84,6 @@ export const hyperRPCSupportedNetworks = [
   531050104,
   1184075182,
   1313161554,
+  1660990954,
   1666600000
 ] as const;

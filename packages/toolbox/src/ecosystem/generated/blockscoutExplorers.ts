@@ -616,6 +616,10 @@ export const blockscoutExplorers = {
     api: "https://aiascan.com/api",
     explorer: "https://aiascan.com"
   },
+  1330: {
+    api: "https://onnscan.com/api",
+    explorer: "https://onnscan.com"
+  },
   1338: {
     api: "https://blockscout.atlantischain.network/api",
     explorer: "https://blockscout.atlantischain.network/"

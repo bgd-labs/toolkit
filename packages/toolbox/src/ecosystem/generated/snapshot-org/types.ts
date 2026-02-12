@@ -1564,6 +1564,9 @@ export default {
             "vp_state": [
                 2
             ],
+            "vp_value": [
+                10
+            ],
             "__typename": [
                 2
             ]
@@ -1850,6 +1853,9 @@ export default {
             ],
             "lastVote": [
                 3
+            ],
+            "vpValue": [
+                10
             ],
             "__typename": [
                 2
