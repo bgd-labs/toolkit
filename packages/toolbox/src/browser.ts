@@ -30,6 +30,7 @@ export * from "./ecosystem/generated/tenderly";
 export * from "./ecosystem/generated/snapshot";
 export * from "./ecosystem/types";
 export * from "./ecosystem/constants";
+export * from "./ecosystem/roles";
 export * from "./operations/diffCode";
 export * from "./operations/indexLogs";
 export * from "./seatbelt/logs";
