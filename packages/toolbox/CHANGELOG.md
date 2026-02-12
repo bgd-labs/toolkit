@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.17
+
+### Patch Changes
+
+- 3d7c4e3: Adding ipfs export
+
 ## 0.2.16
 
 ### Patch Changes
