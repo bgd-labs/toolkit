@@ -1,6 +1,6 @@
 {
   "name": "@bgd-labs/toolbox",
-  "version": "0.2.17",
+  "version": "0.2.18",
   "main": "./dist/index.mjs",
   "browser": "./dist/browser.mjs",
   "module": "./dist/index.mjs",

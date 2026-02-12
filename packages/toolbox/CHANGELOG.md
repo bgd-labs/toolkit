@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.18
+
+### Patch Changes
+
+- 7358d57: Add ipfs bs58 hash
+
 ## 0.2.17
 
 ### Patch Changes
