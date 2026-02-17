@@ -14,6 +14,6 @@ describe("umbrella:rewards", () => {
       emissionPerSecond: 158548n,
       totalSupply: 378469011790n,
     });
-    expect(result).toEqual(0n);
+    expect(result).toEqual(3161197n);
   });
 });
