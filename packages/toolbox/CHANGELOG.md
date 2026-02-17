@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.19
+
+### Patch Changes
+
+- f7df2a1: Added utility function for umbrella reward calculation
+
 ## 0.2.18
 
 ### Patch Changes
