@@ -8,6 +8,7 @@ export * from "./aave/pool/configurations";
 export * from "./aave/governance/payloads-controller";
 export * from "./aave/governance/governance";
 export * from "./aave/governance/aip";
+export * from "./aave/umbrella/rewards";
 export * from "./abis";
 export * from "./math/binary";
 export * from "./math/slot";
