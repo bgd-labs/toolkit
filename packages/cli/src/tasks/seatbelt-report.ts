@@ -1,11 +1,11 @@
-import { IPayloadsControllerCore_ABI } from "@bgd-labs/aave-address-book/abis";
-import { getAddressBookReferences } from "@bgd-labs/aave-address-book/utils";
+import { getAddressBookReferences } from "@aave-dao/aave-address-book/utils";
 import {
   getMdContractName,
   getPayloadsController,
   makePayloadExecutableOnTestClient,
   renderTenderlyReport,
   tenderly_createVnet,
+  IPayloadsController_ABI,
 } from "@bgd-labs/toolbox";
 import { Command, Option } from "@commander-js/extra-typings";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -123,7 +123,7 @@ export function registerSeatbeltReport(program: Command) {
             account: toAccount(sender),
             chain: vnet.walletClient.chain,
             to: payloadsController as Address,
-            data: payloadCalldata as Hex
+            data: payloadCalldata as Hex,
           });
         }
         if (payloadAddress) {
@@ -154,7 +154,7 @@ export function registerSeatbeltReport(program: Command) {
           from: sender,
           to: payloadsController,
           input: encodeFunctionData({
-            abi: IPayloadsControllerCore_ABI,
+            abi: IPayloadsController_ABI,
             functionName: "executePayload",
             args: [currentId],
           }),

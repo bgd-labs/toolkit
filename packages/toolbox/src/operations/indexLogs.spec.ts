@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { genericIndexer, IndexerTopicState } from "./indexLogs";
 import { getClient } from "../ecosystem/rpcs";
-import { AaveV3Ethereum } from "@bgd-labs/aave-address-book";
+import { AaveV3Ethereum } from "@aave/aave-address-book";
 import { getContract } from "viem";
 import { IPool_ABI, IPoolConfigurator_ABI } from "../abis";
 import { getBlockNumber } from "viem/actions";

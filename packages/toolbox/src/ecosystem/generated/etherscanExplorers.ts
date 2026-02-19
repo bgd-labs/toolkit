@@ -140,7 +140,7 @@ export const etherscanExplorers = {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://opbnb-testnet.bscscan.com/"
   },
-  6342: {
+  6343: {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://testnet-mega.etherscan.io/"
   },
@@ -179,10 +179,6 @@ export const etherscanExplorers = {
   42161: {
     api: "https://api.etherscan.io/v2/api",
     explorer: "https://arbiscan.io/"
-  },
-  42170: {
-    api: "https://api.etherscan.io/v2/api",
-    explorer: "https://nova.arbiscan.io/"
   },
   42220: {
     api: "https://api.etherscan.io/v2/api",

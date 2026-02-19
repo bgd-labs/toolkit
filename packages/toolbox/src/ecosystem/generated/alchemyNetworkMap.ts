@@ -82,6 +82,7 @@ export const alchemyNetworkMap = {
   42431: "tempo-moderato",
   43113: "avax-fuji",
   43114: "avax-mainnet",
+  46630: "robinhood-testnet",
   53302: "superseed-sepolia",
   57054: "sonic-blaze",
   57073: "ink-mainnet",

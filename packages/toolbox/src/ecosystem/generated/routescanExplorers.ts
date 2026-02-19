@@ -48,10 +48,6 @@ export const routescanExplorers = {
     api: "https://api.routescan.io/v2/network/mainnet/evm/252/etherscan",
     explorer: "252.routescan.io"
   },
-  254: {
-    api: "https://api.routescan.io/v2/network/mainnet/evm/254/etherscan",
-    explorer: "254.routescan.io"
-  },
   288: {
     api: "https://api.routescan.io/v2/network/mainnet/evm/288/etherscan",
     explorer: "288.routescan.io"

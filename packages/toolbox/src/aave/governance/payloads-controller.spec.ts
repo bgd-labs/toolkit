@@ -1,5 +1,5 @@
 import { describe, it } from "vitest";
-import { GovernanceV3Ethereum } from "@bgd-labs/aave-address-book";
+import { GovernanceV3Ethereum } from "@aave/aave-address-book";
 import { tenderly_createVnet } from "../../ecosystem/tenderly";
 import { makePayloadExecutableOnTestClient } from "./payloads-controller";
 import { encodeFunctionData, toHex } from "viem";

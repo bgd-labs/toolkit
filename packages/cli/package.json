@@ -32,7 +32,7 @@
     "access": "public"
   },
   "dependencies": {
-    "@bgd-labs/aave-address-book": "^4.30.3",
+    "@aave-dao/aave-address-book": "^4.30.3",
     "@bgd-labs/toolbox": "workspace:*",
     "@commander-js/extra-typings": "^13.1.0",
     "@inquirer/prompts": "^7.3.2",

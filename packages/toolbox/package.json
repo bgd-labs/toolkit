@@ -38,7 +38,7 @@
     "@aave-dao/aave-governance-v3": "github:aave-dao/aave-governance-v3",
     "@aave-dao/aave-umbrella": "1.0.0",
     "@aave-dao/aave-v3-origin": "3.6.0",
-    "@bgd-labs/aave-address-book": "^4.31.0",
+    "@aave-dao/aave-address-book": "^4.31.0",
     "@bgd-labs/aave-price-feeds": "github:bgd-labs/aave-price-feeds",
     "@bgd-labs/solidity-utils": "^1.1.2",
     "@genql/cli": "^6.3.3",

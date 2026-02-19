@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { fetchPoolAddresses } from "./addresses";
 import { getClient } from "../../ecosystem/rpcs";
-import { AaveV3Ethereum } from "@bgd-labs/aave-address-book";
+import { AaveV3Ethereum } from "@aave/aave-address-book";
 
 describe("pool:addresses", () => {
   it("should generate same addresses", async () => {

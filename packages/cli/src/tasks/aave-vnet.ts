@@ -6,7 +6,7 @@ import {
   tenderly_createVnet,
 } from "@bgd-labs/toolbox";
 import { checkbox, select, Separator, input } from "@inquirer/prompts";
-import * as addresses from "@bgd-labs/aave-address-book";
+import * as addresses from "@aave-dao/aave-address-book";
 import { Address, parseAbi, zeroAddress } from "viem";
 import { readContract } from "viem/actions";
 import { toAccount } from "viem/accounts";
@@ -145,21 +145,24 @@ export function registerAaveVNet(program: Command) {
                 });
               } catch (e) {}
 
-              await controllerContract.write.createPayload([
+              await controllerContract.write.createPayload(
                 [
-                  {
-                    target: address as Address,
-                    accessLevel: 1,
-                    callData: "0x",
-                    withDelegateCall: true,
-                    signature: "execute()",
-                    value: 0n,
-                  },
+                  [
+                    {
+                      target: address as Address,
+                      accessLevel: 1,
+                      callData: "0x",
+                      withDelegateCall: true,
+                      signature: "execute()",
+                      value: 0n,
+                    },
+                  ],
                 ],
-              ], {
-                account: toAccount(sender),
-                chain: vnet.walletClient.chain,
-              });
+                {
+                  account: toAccount(sender),
+                  chain: vnet.walletClient.chain,
+                },
+              );
               await makePayloadExecutableOnTestClient(
                 vnet.testClient,
                 controllerAddress,
