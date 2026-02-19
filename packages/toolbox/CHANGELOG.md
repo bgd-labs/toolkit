@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.20
+
+### Patch Changes
+
+- 4ba451e: Update dependenceis
+
 ## 0.2.19
 
 ### Patch Changes

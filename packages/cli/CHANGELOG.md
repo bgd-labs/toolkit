@@ -1,5 +1,12 @@
 # @bgd-labs/cli
 
+## 0.0.93
+
+### Patch Changes
+
+- Updated dependencies [4ba451e]
+  - @bgd-labs/toolbox@0.2.20
+
 ## 0.0.92
 
 ### Patch Changes
