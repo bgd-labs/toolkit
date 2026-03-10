@@ -1,4 +1,4 @@
-import { getBytecode, getLogs, getStorageAt } from "viem/actions";
+import { getBlock, getBytecode, getLogs, getStorageAt } from "viem/actions";
 import { erc1967_ImplementationSlot } from "./constants";
 import {
   AbiEvent,
@@ -157,4 +157,61 @@ export async function getContractDeploymentBlock({
     });
   }
   throw new Error("Could not find contract deployment block");
+}
+
+interface GetClosestBlockArgs {
+  client: Client;
+  timestamp: bigint;
+}
+
+/**
+ * Finds the closest block for a given timestamp using binary search.
+ * Returns the last block whose timestamp is <= the target timestamp.
+ * @param client a viem Client
+ * @param timestamp the target unix timestamp
+ * @returns the block closest to (but not after) the given timestamp
+ */
+export async function getClosestBlock({
+  client,
+  timestamp,
+}: GetClosestBlockArgs) {
+  const latestBlock = await getBlock(client, { blockTag: "latest" });
+  if (timestamp >= latestBlock.timestamp) return latestBlock;
+
+  let low = 0n;
+  let high = latestBlock.number;
+
+  // Narrow the search range using block time estimate when available
+  const blockTime = client.chain?.blockTime;
+  if (blockTime) {
+    const secondsDiff = latestBlock.timestamp - timestamp;
+    const blockTimeSecs = BigInt(blockTime) / 1000n;
+    const estimatedBlocksBack = secondsDiff / blockTimeSecs;
+    const estimatedBlock =
+      latestBlock.number > estimatedBlocksBack
+        ? latestBlock.number - estimatedBlocksBack
+        : 0n;
+
+    const estimatedBlockData = await getBlock(client, {
+      blockNumber: estimatedBlock,
+    });
+
+    if (estimatedBlockData.timestamp <= timestamp) {
+      low = estimatedBlock;
+    } else {
+      high = estimatedBlock;
+    }
+  }
+
+  while (low < high) {
+    const mid = (low + high + 1n) >> 1n;
+    const midBlock = await getBlock(client, { blockNumber: mid });
+    if (midBlock.timestamp <= timestamp) {
+      low = mid;
+    } else {
+      high = mid - 1n;
+    }
+  }
+
+  return getBlock(client, { blockNumber: low });
 }
