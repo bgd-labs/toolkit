@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.21
+
+### Patch Changes
+
+- 0be2aff: Patch quicknode avalanche url
+
 ## 0.2.20
 
 ### Patch Changes
