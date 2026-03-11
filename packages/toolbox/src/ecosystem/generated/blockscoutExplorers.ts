@@ -132,10 +132,6 @@ export const blockscoutExplorers = {
     api: "https://bob-sepolia.explorer.gobob.xyz/api",
     explorer: "https://bob-sepolia.explorer.gobob.xyz/"
   },
-  113: {
-    api: "https://coston2-explorer.flare.network/api",
-    explorer: "https://coston2-explorer.flare.network/"
-  },
   114: {
     api: "https://coston2-explorer.flare.network/api",
     explorer: "https://coston2-explorer.flare.network/"
@@ -769,8 +765,8 @@ export const blockscoutExplorers = {
     explorer: "https://testnet.bitciexplorer.com"
   },
   1919: {
-    api: "https://explorer.turkchain1919.com/api",
-    explorer: "https://explorer.turkchain1919.com/"
+    api: "https://turkscan.com/api",
+    explorer: "https://turkscan.com"
   },
   1923: {
     api: "https://explorer.swellnetwork.io/api",
@@ -1163,10 +1159,6 @@ export const blockscoutExplorers = {
   6278: {
     api: "https://explore.steamexchange.io/api",
     explorer: "https://explore.steamexchange.io/"
-  },
-  6342: {
-    api: "https://megaeth-testnet.blockscout.com/api",
-    explorer: "https://megaeth-testnet.blockscout.com/"
   },
   6343: {
     api: "https://megaeth-testnet-v2.blockscout.com/api",
@@ -2275,10 +2267,6 @@ export const blockscoutExplorers = {
   7225878: {
     api: "https://explorer.saakuru.network/api",
     explorer: "https://explorer.saakuru.network/"
-  },
-  7777777: {
-    api: "https://explorer.zora.energy/api",
-    explorer: "https://explorer.zora.energy/"
   },
   7890785: {
     api: "https://blockscout.xga.com/api",

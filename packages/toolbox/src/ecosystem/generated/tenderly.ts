@@ -33,10 +33,10 @@ export const tenderlyNetworkMap = {
   2201: "stable-testnet",
   2523: "fraxtal-hoodi",
   4202: "lisk-sepolia",
+  4326: "megaeth",
   4801: "worldchain-sepolia",
   5000: "mantle",
   5003: "mantle-sepolia",
-  8008: "polynomial",
   8453: "base",
   9069: "af-nexus-mainnet",
   9070: "af-nexus-testnet",
@@ -68,7 +68,6 @@ export const tenderlyNetworkMap = {
   59902: "metis-sepolia",
   60808: "bob",
   80002: "polygon-amoy",
-  80008: "polynomial-sepolia",
   80069: "bepolia",
   80094: "berachain",
   81457: "blast",
@@ -85,8 +84,7 @@ export const tenderlyNetworkMap = {
   808813: "bob-testnet",
   11142220: "celo-sepolia",
   11155111: "sepolia",
-  11155420: "optimism-sepolia",
-  531050104: "sophon-testnet"
+  11155420: "optimism-sepolia"
 } as const;
 
 export const tenderlyExplorerMap = {
@@ -137,12 +135,12 @@ export const tenderlyExplorerMap = {
   2523: "fraxtal-hoodi",
   3338: "peaq",
   4202: "lisk-sepolia",
+  4326: "megaeth",
   4801: "worldchain-sepolia",
   5000: "mantle",
   5003: "mantle-sepolia",
   7000: "zetachain",
   7001: "zetachain-testnet",
-  8008: "polynomial-mainnet",
   8453: "base",
   9069: "af-nexus-mainnet",
   9070: "af-nexus-testnet",
@@ -176,7 +174,6 @@ export const tenderlyExplorerMap = {
   59902: "metis-sepolia",
   60808: "bob",
   80002: "polygon-amoy",
-  80008: "polynomial-sepolia",
   80069: "bepolia",
   80094: "berachain",
   81457: "blast",
@@ -198,6 +195,5 @@ export const tenderlyExplorerMap = {
   11142220: "celo-sepolia",
   11155111: "sepolia",
   11155420: "optimistic-sepolia",
-  13374202: "ethereal-testnet",
-  531050104: "sophon-testnet"
+  13374202: "ethereal-testnet"
 } as const;

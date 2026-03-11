@@ -149,6 +149,9 @@ export function getQuicknodeRpc(
   if (chainId === ChainId.mainnet) {
     return `https://${options.quicknodeEndpointName}.quiknode.pro/${options.quicknodeToken}`;
   }
+  if (chainId === ChainId.avalanche) {
+    return `https://${options.quicknodeEndpointName}.${quickNodeSlug}.quiknode.pro/${options.quicknodeToken}/ext/bc/C/rpc/`;
+  }
   return `https://${options.quicknodeEndpointName}.${quickNodeSlug}.quiknode.pro/${options.quicknodeToken}`;
 }
 

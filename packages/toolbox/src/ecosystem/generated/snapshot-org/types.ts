@@ -386,6 +386,9 @@ export default {
             "verified": [
                 5
             ],
+            "turbo": [
+                5
+            ],
             "domain": [
                 2
             ],
