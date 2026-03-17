@@ -11,10 +11,10 @@ export async function diffCode(
 ) {
   const changes: Record<string, string> = {};
 
-  // diff settings
+  // diff settings (skip if either source doesn't have settings, e.g. some explorers don't return it)
   const settingsBefore = JSON.stringify(before.settings, null, 2);
   const settingsAfter = JSON.stringify(after.settings, null, 2);
-  if (settingsBefore !== settingsAfter)
+  if (settingsBefore && settingsAfter && settingsBefore !== settingsAfter)
     changes.settings = createPatch("settings", settingsBefore, settingsAfter);
   const contractsBefore = await Promise.all(
     Object.entries(before.sources).map(async ([path, source]) => [

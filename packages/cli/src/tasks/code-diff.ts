@@ -56,7 +56,7 @@ export function registerCodeDiff(program: Command) {
             )
           : parseEtherscanStyleSourceCode(sources[0].SourceCode);
         const source2: StandardJsonInput = (
-          sources[0] as BlockscoutStyleSourceCode
+          sources[1] as BlockscoutStyleSourceCode
         ).AdditionalSources
           ? parseBlockscoutStyleSourceCode(
               sources[1] as BlockscoutStyleSourceCode,
