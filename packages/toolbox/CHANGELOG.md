@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.22
+
+### Patch Changes
+
+- f445e51: Fix codeDiffs when no compiler settings provided by the explorer
+
 ## 0.2.21
 
 ### Patch Changes

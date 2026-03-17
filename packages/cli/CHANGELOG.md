@@ -1,5 +1,13 @@
 # @bgd-labs/cli
 
+## 0.0.95
+
+### Patch Changes
+
+- f445e51: Fix codeDiffs when no compiler settings provided by the explorer
+- Updated dependencies [f445e51]
+  - @bgd-labs/toolbox@0.2.22
+
 ## 0.0.94
 
 ### Patch Changes
