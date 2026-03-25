@@ -21,7 +21,7 @@ export function parseLogs({ logs, eventDb }: ParseLogsArgs) {
         data: log.data,
         topics: log.topics,
         abi: eventDb,
-        strict: false,
+        strict: true,
       });
       return { ...log, ...decoded };
     } catch (e) {
