@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.23
+
+### Patch Changes
+
+- 7756abe: Patched log decoding
+
 ## 0.2.22
 
 ### Patch Changes
