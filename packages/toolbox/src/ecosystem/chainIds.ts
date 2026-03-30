@@ -26,6 +26,7 @@ import {
   sonic,
   zksync,
   ink,
+  inkSepolia,
   soneium,
   bob,
   plasma,
@@ -62,6 +63,7 @@ export const ChainId = {
   zksync: zksync.id,
   linea: linea.id,
   ink: ink.id,
+  ink_sepolia: inkSepolia.id,
   soneium: soneium.id,
   bob: bob.id,
   plasma: plasma.id,
@@ -107,6 +109,12 @@ export const ChainList: Record<valueOf<typeof ChainId>, Chain> = {
   [ChainId.zksync]: zksync,
   [ChainId.linea]: linea,
   [ChainId.ink]: ink,
+  [ChainId.ink_sepolia]: {
+    ...inkSepolia,
+    blockExplorers: {
+      default: { url: "https://explorer-sepolia.inkonchain.com/", name: "Ink Sepolia" },
+    },
+  },
   [ChainId.soneium]: soneium,
   [ChainId.bob]: bob,
   [ChainId.plasma]: plasma,
