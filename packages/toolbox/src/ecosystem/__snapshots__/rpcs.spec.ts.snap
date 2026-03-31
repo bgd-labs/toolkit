@@ -12,6 +12,8 @@ exports[`rpcs > should return alchemy supported chain 137 > polygon-mainnet 1`] 
 
 exports[`rpcs > should return alchemy supported chain 146 > sonic-mainnet 1`] = `"https://sonic-mainnet.g.alchemy.com/v2/abc"`;
 
+exports[`rpcs > should return alchemy supported chain 196 > xlayer-mainnet 1`] = `"https://xlayer-mainnet.g.alchemy.com/v2/abc"`;
+
 exports[`rpcs > should return alchemy supported chain 324 > zksync-mainnet 1`] = `"https://zksync-mainnet.g.alchemy.com/v2/abc"`;
 
 exports[`rpcs > should return alchemy supported chain 1088 > metis-mainnet 1`] = `"https://metis-mainnet.g.alchemy.com/v2/abc"`;
@@ -51,6 +53,8 @@ exports[`rpcs > should return alchemy supported chain 421614 > arb-sepolia 1`] =
 exports[`rpcs > should return alchemy supported chain 534351 > scroll-sepolia 1`] = `"https://scroll-sepolia.g.alchemy.com/v2/abc"`;
 
 exports[`rpcs > should return alchemy supported chain 534352 > scroll-mainnet 1`] = `"https://scroll-mainnet.g.alchemy.com/v2/abc"`;
+
+exports[`rpcs > should return alchemy supported chain 763373 > ink-sepolia 1`] = `"https://ink-sepolia.g.alchemy.com/v2/abc"`;
 
 exports[`rpcs > should return alchemy supported chain 11155111 > eth-sepolia 1`] = `"https://eth-sepolia.g.alchemy.com/v2/abc"`;
 

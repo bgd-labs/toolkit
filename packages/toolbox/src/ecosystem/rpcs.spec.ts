@@ -67,6 +67,7 @@ describe("rpcs", () => {
         "RPC_GNOSIS": 100,
         "RPC_HARMONY": 1666600000,
         "RPC_INK": 57073,
+        "RPC_INK_SEPOLIA": 763373,
         "RPC_LINEA": 59144,
         "RPC_MAINNET": 1,
         "RPC_MANTLE": 5000,
