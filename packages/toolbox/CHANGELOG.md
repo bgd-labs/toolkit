@@ -1,5 +1,11 @@
 # @bgd-labs/toolbox
 
+## 0.2.25
+
+### Patch Changes
+
+- bf73dc7: Adds ink sepolia
+
 ## 0.2.24
 
 ### Patch Changes
