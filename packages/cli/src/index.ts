@@ -9,6 +9,7 @@ import { registerRpcs } from "./tasks/rpcs";
 import { registerProtocol } from "./tasks/protocol";
 import { registerSeatbeltReport } from "./tasks/seatbelt-report.js";
 import { registerVerifyBytecode } from "./tasks/verify-bytecode";
+import { registerMigrateVerification } from "./tasks/migrate-verification.js";
 
 const program = new Command();
 
@@ -25,5 +26,6 @@ registerRpcs(program);
 registerProtocol(program);
 registerSeatbeltReport(program);
 registerVerifyBytecode(program);
+registerMigrateVerification(program);
 
 program.parse();

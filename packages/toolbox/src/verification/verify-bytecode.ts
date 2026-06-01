@@ -11,18 +11,17 @@ import {
 } from "@ethereum-sourcify/bytecode-utils";
 import {
   createPublicClient,
-  getAddress,
   http,
   type Address,
   type Chain,
 } from "viem";
 import { getCode } from "viem/actions";
 import { getSourceCode, type ExplorerName } from "../ecosystem/explorers";
-import { getImplementationSlot } from "../ecosystem/rpc-helpers";
 import { ChainList } from "../ecosystem/chainIds";
 import { getRPCUrl, type SupportedChainIds } from "../ecosystem/rpcs";
 import { createSolcCompiler } from "./compiler";
 import { normalizeExplorerSource } from "./normalize";
+import { resolveImplementation } from "./proxy";
 
 export type VerifyBytecodeParams = {
   chainId: number;
@@ -67,12 +66,6 @@ export type VerifyBytecodeResult = {
   /** CBOR auxdata decoded straight from the on-chain runtime bytecode. */
   onchainAuxdata: SolidityDecodedObject;
 };
-
-/** Extracts the implementation address from an EIP-1967 storage slot value. */
-function slotToAddress(slot: string | undefined): Address | undefined {
-  if (!slot || BigInt(slot) === 0n) return undefined;
-  return getAddress(`0x${slot.slice(-40)}`);
-}
 
 /**
  * Independently verifies that the source an explorer serves for a contract
@@ -119,17 +112,14 @@ export async function verifyBytecode(
   if (resolveProxy) {
     // EIP-1967 slot is the source of truth; fall back to the explorer's own
     // proxy hint for non-standard proxies it happens to recognise.
-    implementation = slotToAddress(
-      await getImplementationSlot(client, address),
-    );
-    if (!implementation) {
-      const reported = (rootSource as { Implementation?: string })
-        .Implementation;
-      const isProxy = (rootSource as { Proxy?: string }).Proxy === "1";
-      if (isProxy && reported && BigInt(reported) !== 0n) {
-        implementation = getAddress(reported);
-      }
-    }
+    implementation = await resolveImplementation({
+      address,
+      client,
+      explorerSource: rootSource as {
+        Proxy?: string;
+        Implementation?: string;
+      },
+    });
   }
 
   const verifiedAddress = implementation ?? address;
