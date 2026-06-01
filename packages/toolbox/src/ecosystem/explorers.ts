@@ -8,7 +8,7 @@ export type ExplorerConfig = { api: string; explorer: string };
 
 /**
  * Fetches what we consider the "best" explorer for a given chain.
- * For our tooling we have a opinionated priorization for explorers:
+ * For our tooling we have a opinionated prioritization for explorers:
  * 1. Etherscan
  * 2. Routescan
  * 3. Blockscout and others
@@ -27,11 +27,52 @@ export function getExplorer(chainId: number): ExplorerConfig {
   throw new Error(`No explorer found for chainId: ${chainId}`);
 }
 
+/**
+ * Explorer families understood by the tooling. The first three are
+ * etherscan-compatible and resolvable via {@link getExplorerByName}; `oklink`
+ * speaks a bespoke API and is fetched directly by {@link getSourceCode}.
+ */
+export type ExplorerName = "etherscan" | "routescan" | "blockscout" | "oklink";
+
+/**
+ * Fetches the config for a specific etherscan-style explorer family on a given
+ * chain, ignoring the {@link getExplorer} prioritization. Use this when you need
+ * to force a particular explorer (e.g. a chain has no etherscan but does have
+ * blockscout). Note `oklink` has no config map and is not resolvable here.
+ * @param chainId Id of the chain to fetch the explorer for
+ * @param name The explorer family to use
+ */
+export function getExplorerByName(
+  chainId: number,
+  name: ExplorerName,
+): ExplorerConfig {
+  const maps: Partial<Record<ExplorerName, Record<number, ExplorerConfig>>> = {
+    etherscan: etherscanExplorers,
+    routescan: routescanExplorers,
+    blockscout: blockscoutExplorers,
+  };
+  const config = maps[name]?.[chainId];
+  if (!config) {
+    throw new Error(`No ${name} explorer found for chainId: ${chainId}`);
+  }
+  return config;
+}
+
 type GetSourceCodeParams = {
   chainId: number;
   address: Address;
   apiUrl?: string;
   apiKey?: string;
+  /**
+   * Force a specific explorer family. When omitted, xLayer defaults to OKLink
+   * and every other chain uses the prioritized {@link getExplorer}.
+   */
+  explorer?: ExplorerName;
+};
+
+/** chainId -> OKLink `chainShortName`, as expected by its explorer API. */
+const okLinkChainShortNames: Record<number, string> = {
+  [ChainId.xLayer]: "xlayer",
 };
 
 export type EtherscanStyleSourceCode = {
@@ -67,8 +108,13 @@ export type BlockscoutStyleSourceCode = {
 };
 
 export async function getSourceCode(params: GetSourceCodeParams) {
-  if (params.chainId === ChainId.xLayer) {
-    return getXLayerSourceCode(params);
+  // OKLink (used for xLayer) speaks a different API; route to it explicitly when
+  // requested, and keep it as the default for xLayer.
+  if (
+    params.explorer === "oklink" ||
+    (params.chainId === ChainId.xLayer && !params.explorer)
+  ) {
+    return getOkLinkSourceCode(params);
   }
   const payload = {
     chainid: String(params.chainId),
@@ -78,7 +124,14 @@ export async function getSourceCode(params: GetSourceCodeParams) {
   };
   if (params.apiKey) (payload as any).apikey = params.apiKey;
   const formattedPayload = new URLSearchParams(payload).toString();
-  const url = `${params.apiUrl ? params.apiUrl : getExplorer(params.chainId).api}?${formattedPayload}`;
+  // An explicit apiUrl (e.g. a proxy) wins; then a forced explorer family; then
+  // the prioritized default explorer for the chain.
+  const apiUrl =
+    params.apiUrl ??
+    (params.explorer
+      ? getExplorerByName(params.chainId, params.explorer).api
+      : getExplorer(params.chainId).api);
+  const url = `${apiUrl}?${formattedPayload}`;
   console.log(url);
   const request = await fetch(url);
   const { status, message, result } = (await request.json()) as {
@@ -124,9 +177,15 @@ export function parseBlockscoutStyleSourceCode(
   return result;
 }
 
-async function getXLayerSourceCode(params: GetSourceCodeParams) {
+async function getOkLinkSourceCode(params: GetSourceCodeParams) {
+  const chainShortName = okLinkChainShortNames[params.chainId];
+  if (!chainShortName) {
+    throw new Error(
+      `OKLink explorer is not configured for chainId: ${params.chainId}`,
+    );
+  }
   const payload = {
-    chainShortName: "xlayer",
+    chainShortName,
     contractAddress: params.address,
   };
 

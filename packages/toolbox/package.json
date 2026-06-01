@@ -28,17 +28,21 @@
     "generate:snapshot-org": "bunx genql --endpoint https://hub.snapshot.org/graphql --output ./src/ecosystem/generated/snapshot-org"
   },
   "dependencies": {
+    "@ethereum-sourcify/bytecode-utils": "1.5.3",
+    "@ethereum-sourcify/compilers-types": "^1.2.0",
+    "@ethereum-sourcify/lib-sourcify": "3.5.3",
     "bs58": "^6.0.0",
     "diff": "^8.0.3",
     "eventsource": "^4.1.0",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "solc": "^0.8.35"
   },
   "devDependencies": {
+    "@aave-dao/aave-address-book": "^4.31.0",
     "@aave-dao/aave-delivery-infrastructure": "github:aave-dao/aave-delivery-infrastructure",
     "@aave-dao/aave-governance-v3": "github:aave-dao/aave-governance-v3",
     "@aave-dao/aave-umbrella": "1.0.0",
     "@aave-dao/aave-v3-origin": "3.6.0",
-    "@aave-dao/aave-address-book": "^4.31.0",
     "@bgd-labs/aave-price-feeds": "github:bgd-labs/aave-price-feeds",
     "@bgd-labs/solidity-utils": "^1.1.2",
     "@genql/cli": "^6.3.3",
@@ -78,6 +82,11 @@
       "types": "./dist/browser.d.mts",
       "import": "./dist/browser.mjs",
       "default": "./dist/browser.mjs"
+    },
+    "./verification": {
+      "types": "./dist/verification.d.mts",
+      "import": "./dist/verification.mjs",
+      "default": "./dist/verification.mjs"
     },
     "./package.json": "./package.json"
   },

@@ -25,4 +25,16 @@ export default defineConfig([
     clean: true,
     inlineOnly: false,
   },
+  {
+    exports: false,
+    sourcemap: true,
+    entry: {
+      verification: "src/verification.ts",
+    },
+    platform: "node",
+    format: ["esm"],
+    dts: true,
+    clean: false,
+    inlineOnly: false,
+  },
 ]);
