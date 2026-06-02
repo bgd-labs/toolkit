@@ -1,10 +1,10 @@
 import { Command, Option } from "@commander-js/extra-typings";
 import { Address } from "viem";
-import { verifyBytecode } from "@bgd-labs/toolbox/verification";
+import { validateVerification } from "@bgd-labs/toolbox/verification";
 
-export function registerVerifyBytecode(program: Command) {
+export function registerValidateVerification(program: Command) {
   program
-    .command("verifyBytecode")
+    .command("validateVerification")
     .description(
       "independently verify that an explorer's source compiles to the on-chain bytecode",
     )
@@ -40,7 +40,7 @@ export function registerVerifyBytecode(program: Command) {
             "The sourcify explorer adapter is not implemented yet; use etherscan or blockscout.",
           );
         }
-        const result = await verifyBytecode({
+        const result = await validateVerification({
           chainId: Number(chainId),
           address: contractAddress as Address,
           rpcUrl,

@@ -7,8 +7,12 @@ A cli tool to help with various web3 / solidity tasks. For a full overview of fe
 Make sure to setup your .env
 
 ```
-# Used for code and storage diffs
+# Used for code/storage diffs and for reading + publishing contract verification
+# (etherscan, routescan)
 ETHERSCAN_API_KEY=
+
+# Only needed when migrating verification to/from OKLink (xLayer etc.)
+OKLINK_API_KEY=
 
 # Used for creating tenderly vnets
 TENDERLY_ACCESS_TOKEN=
@@ -80,4 +84,71 @@ Options:
   -a, --tenderlyAccountSlug <string>  defaults to env.TENDERLY_ACCOUNT_SLUG
   -p, --tenderlyProjectSlug <string>  defaults to env.TENDERLY_PROJECT_SLUG
   -h, --help                          display help for command
+```
+
+## Validate Verification
+
+`npx @bgd-labs/cli validateVerification` independently checks that the source an explorer serves for a contract actually compiles to the bytecode deployed on-chain. Instead of trusting the explorer's "verified" badge, it downloads the source + compiler settings, recompiles them locally with the exact solc version, and diffs the result against the live runtime bytecode (`perfect` = incl. metadata, `partial` = modulo metadata, `❌` = no match). Proxies are followed via EIP-1967, so the implementation is what gets checked. Exits non-zero when the source does not reproduce the on-chain bytecode.
+
+```
+Usage: @bgd-labs/cli validateVerification [options]
+
+Options:
+  --contractAddress <address>  address of the contract to verify
+  --chainId <number>           chain id of the contract
+  --rpc-url <url>              rpc url (defaults to the toolbox's resolved url)
+  --explorer <name>            explorer to source verification data from
+                               (choices: "etherscan", "blockscout", "routescan", "oklink")
+  --no-proxy                   verify the address as-is instead of following proxies
+  -o, --output <format>        (choices: "table", "json", default: "table")
+  -h, --help                   display help for command
+```
+
+```sh
+# verify the Aave V3 Pool — follows the proxy to its implementation
+npx @bgd-labs/cli validateVerification --contractAddress 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2 --chainId 1
+
+# force a specific explorer and emit json
+npx @bgd-labs/cli validateVerification --contractAddress 0xa0208CE8356ad6C5EC6dFb8996c9A6B828212022 --chainId 1868 --explorer blockscout -o json
+```
+
+## Migrate Verification
+
+`npx @bgd-labs/cli migrateVerification` copies a contract's verification from one explorer to another — optionally on a different chain. It downloads the verified source from the `from` side, normalizes it to a solc standard-json input, and republishes it on the `to` side, skipping anything already verified and following EIP-1967 proxies (migrating both the proxy shell and its implementation). Because `from` and `to` are independent, a source verified on one network can be reused to verify the same deployment on another (e.g. Ethereum → Optimism).
+
+For the common **same-chain** case only `--fromContract`, `--fromChainId` and `--toExplorer` are required — `--toContract`/`--toChainId` default to the `from` values and `--fromExplorer` auto-detects the chain's prioritized explorer.
+
+```
+Usage: @bgd-labs/cli migrateVerification [options]
+
+Options:
+  --fromContract <address>  address of the verified source contract
+  --fromChainId <number>    chain id of the source contract
+  --toExplorer <name>       explorer to publish the verification to
+                            (choices: "etherscan", "blockscout", "routescan", "oklink")
+  --toContract <address>    address to verify on the target (defaults to --fromContract)
+  --toChainId <number>      chain id of the target contract (defaults to --fromChainId)
+  --fromExplorer <name>     explorer to read the source from (defaults to the chain's prioritized explorer)
+  --fromApiKey <key>        source explorer api key (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)
+  --toApiKey <key>          target explorer api key (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)
+  --fromApiUrl <url>        api url override for the source explorer
+  --toApiUrl <url>          api url override for the target explorer
+  --fromRpcUrl <url>        rpc url for proxy resolution on the source chain
+  --toRpcUrl <url>          rpc url for proxy resolution on the target chain
+  --no-proxy                migrate the address as-is instead of following proxies
+  --no-wait                 submit without polling for the verification result
+  --pollTimeout <seconds>   max seconds to wait for verification (polls every 10s, default 180)
+  -o, --output <format>     (choices: "table", "json", default: "table")
+  -h, --help                display help for command
+```
+
+```sh
+# same chain — copy an etherscan verification over to blockscout
+npx @bgd-labs/cli migrateVerification --fromContract 0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2 --fromChainId 1 --toExplorer blockscout
+
+# cross-chain — reuse an Ethereum-verified source to verify the same deployment on Optimism
+npx @bgd-labs/cli migrateVerification --fromContract 0x... --fromChainId 1 --fromExplorer etherscan --toChainId 10 --toExplorer etherscan
+
+# cross-chain + different target address
+npx @bgd-labs/cli migrateVerification --fromContract 0xAAA... --fromChainId 1 --toContract 0xBBB... --toChainId 10 --toExplorer blockscout
 ```

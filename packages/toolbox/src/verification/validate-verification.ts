@@ -23,7 +23,7 @@ import { createSolcCompiler } from "./compiler";
 import { normalizeExplorerSource } from "./normalize";
 import { resolveImplementation } from "./proxy";
 
-export type VerifyBytecodeParams = {
+export type ValidateVerificationParams = {
   chainId: number;
   address: Address;
   /** Explicit RPC url. Falls back to the toolbox's resolved url when omitted. */
@@ -45,7 +45,7 @@ export type VerifyBytecodeParams = {
   resolveProxy?: boolean;
 };
 
-export type VerifyBytecodeResult = {
+export type ValidateVerificationResult = {
   /** The address requested by the caller. */
   address: Address;
   chainId: number;
@@ -77,9 +77,9 @@ export type VerifyBytecodeResult = {
  * reporting a `perfect` (incl. metadata) / `partial` (modulo metadata) / `null`
  * (no match) status.
  */
-export async function verifyBytecode(
-  params: VerifyBytecodeParams,
-): Promise<VerifyBytecodeResult> {
+export async function validateVerification(
+  params: ValidateVerificationParams,
+): Promise<ValidateVerificationResult> {
   const { chainId, address, apiKey, apiUrl, explorer, resolveProxy = true } =
     params;
   // Resolve an rpc: explicit > toolbox's resolved url > the chain's default rpc.
