@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { verifyBytecode } from "./verify-bytecode";
+import { validateVerification } from "./validate-verification";
 
 // These hit a live explorer + rpc and download the matching solc compiler, so
 // they are skipped on CI (same convention as ecosystem/explorers.spec.ts) and
 // run locally with `ETHERSCAN_API_KEY` set.
-describe("verification:verifyBytecode", () => {
+describe("verification:validateVerification", () => {
   it.skipIf(process.env.CI)(
     "follows the Aave V3 Pool proxy and matches its implementation",
     async () => {
-      const result = await verifyBytecode({
+      const result = await validateVerification({
         chainId: 1,
         address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
         apiKey: process.env.ETHERSCAN_API_KEY,
