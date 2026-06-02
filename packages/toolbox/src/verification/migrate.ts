@@ -35,12 +35,6 @@ export type MigrateVerificationParams = {
   from: MigrationEndpoint;
   /** Where to publish the verification. */
   to: MigrationEndpoint;
-  /**
-   * When true (default), proxies are followed and the implementation is
-   * migrated alongside the proxy shell. The implementation source is read from
-   * the source chain's implementation and verified against the target chain's.
-   */
-  resolveProxy?: boolean;
   /** When true (default), poll the target until verification settles. */
   wait?: boolean;
   /** Polling overrides forwarded to {@link waitForVerification}. */
@@ -281,7 +275,7 @@ async function migrateOne(
 export async function migrateVerification(
   params: MigrateVerificationParams,
 ): Promise<MigrateVerificationResult> {
-  const { from, to, resolveProxy = true } = params;
+  const { from, to } = params;
   const log = params.onLog;
 
   // The origin must actually have the source for the root address.
@@ -307,26 +301,23 @@ export async function migrateVerification(
 
   // Resolve the proxy on the source chain (where the proxy hint is available);
   // resolve the implementation address on the target chain separately, since it
-  // can differ per chain.
-  let implFrom: Address | undefined;
+  // can differ per chain. Resolving a non-proxy is a no-op (returns undefined).
   let implTo: Address | undefined;
-  if (resolveProxy) {
-    implFrom = await resolveImplementation({
-      address: from.address,
-      client: createClient(from.chainId, from.rpcUrl),
-      explorerSource: rootSource as { Proxy?: string; Implementation?: string },
-    });
-    if (implFrom) {
-      const sameTarget =
-        to.chainId === from.chainId &&
-        to.address.toLowerCase() === from.address.toLowerCase();
-      implTo = sameTarget
-        ? implFrom
-        : ((await resolveImplementation({
-            address: to.address,
-            client: createClient(to.chainId, to.rpcUrl),
-          })) ?? implFrom);
-    }
+  const implFrom = await resolveImplementation({
+    address: from.address,
+    client: createClient(from.chainId, from.rpcUrl),
+    explorerSource: rootSource as { Proxy?: string; Implementation?: string },
+  });
+  if (implFrom) {
+    const sameTarget =
+      to.chainId === from.chainId &&
+      to.address.toLowerCase() === from.address.toLowerCase();
+    implTo = sameTarget
+      ? implFrom
+      : ((await resolveImplementation({
+          address: to.address,
+          client: createClient(to.chainId, to.rpcUrl),
+        })) ?? implFrom);
   }
 
   const ctx: MigrateContext = {

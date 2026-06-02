@@ -1,39 +1,81 @@
+import { readFileSync } from "node:fs";
 import { Command, Option } from "@commander-js/extra-typings";
 import { Address } from "viem";
-import { migrateVerification } from "@bgd-labs/toolbox/verification";
+import {
+  expandMigrateConfig,
+  migrateVerification,
+  type MigrateBatchConfig,
+  type MigrateVerificationParams,
+  type MigrateVerificationResult,
+} from "@bgd-labs/toolbox/verification";
 
 const EXPLORERS = ["etherscan", "blockscout", "routescan", "oklink"] as const;
+
+/**
+ * Fill in api keys / proxy url from the environment when a job didn't set them.
+ * Only the etherscan-compatible explorers need a key; OKLink ignores it, so a
+ * single `ETHERSCAN_API_KEY` default covers every family.
+ */
+function withEnvKeys(job: MigrateVerificationParams): MigrateVerificationParams {
+  return {
+    ...job,
+    from: {
+      ...job.from,
+      apiKey: job.from.apiKey ?? process.env.ETHERSCAN_API_KEY,
+      apiUrl: job.from.apiUrl ?? process.env.EXPLORER_PROXY,
+    },
+    to: { ...job.to, apiKey: job.to.apiKey ?? process.env.ETHERSCAN_API_KEY },
+  };
+}
+
+function printSummary(result: MigrateVerificationResult) {
+  const icon = (status: string) =>
+    status === "verified"
+      ? "✅ verified"
+      : status === "already-verified"
+        ? "⏭️  already verified"
+        : status === "pending"
+          ? "🟡 pending"
+          : `❌ ${status}`;
+  console.log(
+    `\nSummary (${result.from.explorer ?? "auto"}@${result.from.chainId} → ${result.to.explorer}@${result.to.chainId}):`,
+  );
+  console.table(
+    result.targets.reduce(
+      (acc, t) => {
+        acc[t.address] = {
+          role: t.role,
+          status: icon(t.status),
+          ...(t.sourceAddress.toLowerCase() !== t.address.toLowerCase()
+            ? { source: t.sourceAddress }
+            : {}),
+          detail: t.message ?? "",
+        };
+        return acc;
+      },
+      {} as Record<string, Record<string, string>>,
+    ),
+  );
+}
 
 export function registerMigrateVerification(program: Command) {
   program
     .command("migrateVerification")
     .description(
-      "copy a contract's verification to another explorer and/or chain (follows proxies)",
+      "copy a contract's verification to another explorer and/or chain (follows proxies; supports batch via --config)",
     )
     .addOption(
       new Option(
-        "--fromContract <address>",
-        "address of the verified source contract",
-      ).makeOptionMandatory(),
-    )
-    .addOption(
-      new Option(
-        "--toContract <address>",
-        "address to verify on the target (defaults to --fromContract)",
+        "--config <path>",
+        "json config for batch migration (see README); when set, the flags below are ignored",
       ),
     )
     .addOption(
-      new Option(
-        "--fromChainId <number>",
-        "chain id of the source contract",
-      ).makeOptionMandatory(),
+      new Option("--fromContract <address>", "address of the verified source contract"),
     )
-    .addOption(
-      new Option(
-        "--toChainId <number>",
-        "chain id of the target contract (defaults to --fromChainId)",
-      ),
-    )
+    .addOption(new Option("--toContract <address>", "address to verify on the target (defaults to --fromContract)"))
+    .addOption(new Option("--fromChainId <number>", "chain id of the source contract"))
+    .addOption(new Option("--toChainId <number>", "chain id of the target contract (defaults to --fromChainId)"))
     .addOption(
       new Option(
         "--fromExplorer <name>",
@@ -41,39 +83,15 @@ export function registerMigrateVerification(program: Command) {
       ).choices(EXPLORERS),
     )
     .addOption(
-      new Option("--toExplorer <name>", "explorer to publish the verification to")
-        .choices(EXPLORERS)
-        .makeOptionMandatory(),
+      new Option("--toExplorer <name>", "explorer to publish the verification to").choices(EXPLORERS),
     )
-    .addOption(
-      new Option(
-        "--fromApiKey <key>",
-        "api key for the source explorer (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)",
-      ),
-    )
-    .addOption(
-      new Option(
-        "--toApiKey <key>",
-        "api key for the target explorer (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)",
-      ),
-    )
+    .addOption(new Option("--fromApiKey <key>", "source explorer api key (defaults to env)"))
+    .addOption(new Option("--toApiKey <key>", "target explorer api key (defaults to env)"))
     .addOption(new Option("--fromApiUrl <url>", "api url override for the source explorer"))
     .addOption(new Option("--toApiUrl <url>", "api url override for the target explorer"))
-    .addOption(
-      new Option("--fromRpcUrl <url>", "rpc url for proxy resolution on the source chain"),
-    )
-    .addOption(
-      new Option("--toRpcUrl <url>", "rpc url for proxy resolution on the target chain"),
-    )
-    .addOption(
-      new Option(
-        "--no-proxy",
-        "migrate the address as-is instead of following proxies",
-      ),
-    )
-    .addOption(
-      new Option("--no-wait", "submit without polling for the verification result"),
-    )
+    .addOption(new Option("--fromRpcUrl <url>", "rpc url for proxy resolution on the source chain"))
+    .addOption(new Option("--toRpcUrl <url>", "rpc url for proxy resolution on the target chain"))
+    .addOption(new Option("--no-wait", "submit without polling for the verification result"))
     .addOption(
       new Option(
         "--pollTimeout <seconds>",
@@ -83,106 +101,91 @@ export function registerMigrateVerification(program: Command) {
     .addOption(
       new Option("-o, --output <format>").choices(["table", "json"]).default("table"),
     )
-    .action(
-      async ({
-        fromContract,
-        toContract,
-        fromChainId,
-        toChainId,
-        fromExplorer,
-        toExplorer,
-        fromApiKey,
-        toApiKey,
-        fromApiUrl,
-        toApiUrl,
-        fromRpcUrl,
-        toRpcUrl,
-        proxy,
-        wait,
-        pollTimeout,
-        output,
-      }) => {
-        // The target defaults to the same contract/chain as the source, so the
-        // common "same address, different explorer" case stays concise.
-        const toAddress = (toContract ?? fromContract) as Address;
-        const toChain = Number(toChainId ?? fromChainId);
-
-        // Each explorer family reads from its own api key env var; OKLink uses
-        // its own key (set OKLINK_API_KEY), the etherscan-compatible families
-        // share ETHERSCAN_API_KEY.
-        const defaultKey = (explorer?: string) =>
-          explorer === "oklink"
-            ? process.env.OKLINK_API_KEY
-            : process.env.ETHERSCAN_API_KEY;
-
-        // In table mode stream progress to the console; keep json output clean.
-        const verbose = output !== "json";
-        if (verbose) {
-          console.log(
-            `Migrating verification: ${fromExplorer ?? "auto"}@${fromChainId} ${fromContract} → ${toExplorer}@${toChain} ${toAddress}…`,
-          );
-        }
-
-        const result = await migrateVerification({
-          from: {
-            chainId: Number(fromChainId),
-            address: fromContract as Address,
-            explorer: fromExplorer,
-            apiKey: fromApiKey ?? defaultKey(fromExplorer),
-            apiUrl: fromApiUrl ?? process.env.EXPLORER_PROXY,
-            rpcUrl: fromRpcUrl,
-          },
-          to: {
-            chainId: toChain,
-            address: toAddress,
-            explorer: toExplorer,
-            apiKey: toApiKey ?? defaultKey(toExplorer),
-            apiUrl: toApiUrl,
-            rpcUrl: toRpcUrl,
-          },
-          resolveProxy: proxy,
-          wait,
-          pollTimeoutMs: pollTimeout ? Number(pollTimeout) * 1000 : undefined,
-          onLog: verbose ? (m) => console.log(m) : undefined,
-        });
-
-        if (output === "json") {
-          console.log(JSON.stringify(result, null, 2));
-        } else {
-          const icon = (status: string) =>
-            status === "verified"
-              ? "✅ verified"
-              : status === "already-verified"
-                ? "⏭️  already verified"
-                : status === "pending"
-                  ? "🟡 pending"
-                  : `❌ ${status}`;
-          console.log(
-            `\nSummary (${result.from.explorer ?? "auto"}@${result.from.chainId} → ${result.to.explorer}@${result.to.chainId}):`,
-          );
-          console.table(
-            result.targets.reduce(
-              (acc, t) => {
-                acc[t.address] = {
-                  role: t.role,
-                  status: icon(t.status),
-                  // surface the source address only when it differs (cross-chain)
-                  ...(t.sourceAddress.toLowerCase() !== t.address.toLowerCase()
-                    ? { source: t.sourceAddress }
-                    : {}),
-                  detail: t.message ?? "",
-                };
-                return acc;
-              },
-              {} as Record<string, Record<string, string>>,
-            ),
-          );
-        }
-
-        // CI gate: any target that failed (or never settled) is a non-zero exit.
-        if (result.targets.some((t) => t.status === "failed")) {
-          process.exitCode = 1;
-        }
-      },
+    .action((opts) =>
+      run(opts).catch((e) => {
+        console.error(`Error: ${(e as Error).message}`);
+        process.exit(1);
+      }),
     );
+}
+
+async function run(opts: {
+  config?: string;
+  fromContract?: string;
+  toContract?: string;
+  fromChainId?: string;
+  toChainId?: string;
+  fromExplorer?: (typeof EXPLORERS)[number];
+  toExplorer?: (typeof EXPLORERS)[number];
+  fromApiKey?: string;
+  toApiKey?: string;
+  fromApiUrl?: string;
+  toApiUrl?: string;
+  fromRpcUrl?: string;
+  toRpcUrl?: string;
+  wait?: boolean;
+  pollTimeout?: string;
+  output?: string;
+}) {
+  const verbose = opts.output !== "json";
+
+  // Build the list of jobs: from a config file (batch) or the flags (single).
+  let jobs: MigrateVerificationParams[];
+  if (opts.config) {
+    const parsed = JSON.parse(readFileSync(opts.config, "utf8")) as MigrateBatchConfig;
+    jobs = expandMigrateConfig(parsed).map(withEnvKeys);
+    if (verbose) console.log(`Loaded ${jobs.length} migration(s) from ${opts.config}`);
+  } else {
+    if (!opts.fromContract || !opts.fromChainId || !opts.toExplorer) {
+      throw new Error(
+        "provide --config, or at least --fromContract, --fromChainId and --toExplorer",
+      );
+    }
+    jobs = [
+      withEnvKeys({
+        from: {
+          chainId: Number(opts.fromChainId),
+          address: opts.fromContract as Address,
+          explorer: opts.fromExplorer,
+          apiKey: opts.fromApiKey,
+          apiUrl: opts.fromApiUrl,
+          rpcUrl: opts.fromRpcUrl,
+        },
+        to: {
+          chainId: Number(opts.toChainId ?? opts.fromChainId),
+          address: (opts.toContract ?? opts.fromContract) as Address,
+          explorer: opts.toExplorer,
+          apiKey: opts.toApiKey,
+          apiUrl: opts.toApiUrl,
+          rpcUrl: opts.toRpcUrl,
+        },
+        wait: opts.wait,
+        pollTimeoutMs: opts.pollTimeout ? Number(opts.pollTimeout) * 1000 : undefined,
+      }),
+    ];
+  }
+
+  const results: MigrateVerificationResult[] = [];
+  for (const job of jobs) {
+    if (verbose) {
+      console.log(
+        `\nMigrating: ${job.from.explorer ?? "auto"}@${job.from.chainId} ${job.from.address} → ${job.to.explorer}@${job.to.chainId} ${job.to.address}…`,
+      );
+    }
+    const result = await migrateVerification({
+      ...job,
+      onLog: verbose ? (m) => console.log(m) : undefined,
+    });
+    results.push(result);
+    if (verbose) printSummary(result);
+  }
+
+  if (opts.output === "json") {
+    console.log(JSON.stringify(opts.config ? results : results[0], null, 2));
+  }
+
+  // CI gate: any target that failed (or never settled) is a non-zero exit.
+  if (results.some((r) => r.targets.some((t) => t.status === "failed"))) {
+    process.exitCode = 1;
+  }
 }

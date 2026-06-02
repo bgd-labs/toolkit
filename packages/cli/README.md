@@ -8,11 +8,8 @@ Make sure to setup your .env
 
 ```
 # Used for code/storage diffs and for reading + publishing contract verification
-# (etherscan, routescan)
+# (etherscan, routescan). OKLink needs no key.
 ETHERSCAN_API_KEY=
-
-# Only needed when migrating verification to/from OKLink (xLayer etc.)
-OKLINK_API_KEY=
 
 # Used for creating tenderly vnets
 TENDERLY_ACCESS_TOKEN=
@@ -99,7 +96,6 @@ Options:
   --rpc-url <url>              rpc url (defaults to the toolbox's resolved url)
   --explorer <name>            explorer to source verification data from
                                (choices: "etherscan", "blockscout", "routescan", "oklink")
-  --no-proxy                   verify the address as-is instead of following proxies
   -o, --output <format>        (choices: "table", "json", default: "table")
   -h, --help                   display help for command
 ```
@@ -110,6 +106,24 @@ npx @bgd-labs/cli validateVerification --contractAddress 0x87870Bca3F3fD6335C3F4
 
 # force a specific explorer and emit json
 npx @bgd-labs/cli validateVerification --contractAddress 0xa0208CE8356ad6C5EC6dFb8996c9A6B828212022 --chainId 1868 --explorer blockscout -o json
+```
+
+### Batch (`--config`)
+
+Pass `--config <path>` to validate many contracts in one run (the flags above are ignored). The JSON has optional shared `defaults` plus a `contracts` list — each entry is a bare address (using the defaults) or an object overriding any of `chainId` / `explorer` / `rpcUrl`:
+
+```json
+{
+  "defaults": { "chainId": 1, "explorer": "etherscan" },
+  "contracts": [
+    "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    { "address": "0xa0208CE8356ad6C5EC6dFb8996c9A6B828212022", "chainId": 1868, "explorer": "blockscout" }
+  ]
+}
+```
+
+```sh
+npx @bgd-labs/cli validateVerification --config ./validate.json
 ```
 
 ## Migrate Verification
@@ -129,13 +143,12 @@ Options:
   --toContract <address>    address to verify on the target (defaults to --fromContract)
   --toChainId <number>      chain id of the target contract (defaults to --fromChainId)
   --fromExplorer <name>     explorer to read the source from (defaults to the chain's prioritized explorer)
-  --fromApiKey <key>        source explorer api key (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)
-  --toApiKey <key>          target explorer api key (defaults to env.ETHERSCAN_API_KEY / env.OKLINK_API_KEY)
+  --fromApiKey <key>        source explorer api key (defaults to env.ETHERSCAN_API_KEY)
+  --toApiKey <key>          target explorer api key (defaults to env.ETHERSCAN_API_KEY)
   --fromApiUrl <url>        api url override for the source explorer
   --toApiUrl <url>          api url override for the target explorer
   --fromRpcUrl <url>        rpc url for proxy resolution on the source chain
   --toRpcUrl <url>          rpc url for proxy resolution on the target chain
-  --no-proxy                migrate the address as-is instead of following proxies
   --no-wait                 submit without polling for the verification result
   --pollTimeout <seconds>   max seconds to wait for verification (polls every 10s, default 180)
   -o, --output <format>     (choices: "table", "json", default: "table")
@@ -152,3 +165,25 @@ npx @bgd-labs/cli migrateVerification --fromContract 0x... --fromChainId 1 --fro
 # cross-chain + different target address
 npx @bgd-labs/cli migrateVerification --fromContract 0xAAA... --fromChainId 1 --toContract 0xBBB... --toChainId 10 --toExplorer blockscout
 ```
+
+### Batch (`--config`)
+
+Pass `--config <path>` to migrate many contracts in one run (the flags above are ignored). `from`/`to` are the shared endpoints (chain/explorer/keys); each entry in `contracts` is an address (used on both sides) or `{ "from": "0x…", "to": "0x…" }` to point at different addresses:
+
+```json
+{
+  "from": { "chainId": 1, "explorer": "etherscan" },
+  "to": { "chainId": 1, "explorer": "blockscout" },
+  "wait": true,
+  "contracts": [
+    "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+    { "from": "0xAAA…", "to": "0xBBB…" }
+  ]
+}
+```
+
+```sh
+npx @bgd-labs/cli migrateVerification --config ./migrate.json
+```
+
+API keys are never put in the config — they default from `ETHERSCAN_API_KEY` in your environment (OKLink needs no key).

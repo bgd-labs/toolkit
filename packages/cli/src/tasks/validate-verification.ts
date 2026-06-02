@@ -1,89 +1,135 @@
+import { readFileSync } from "node:fs";
 import { Command, Option } from "@commander-js/extra-typings";
 import { Address } from "viem";
-import { validateVerification } from "@bgd-labs/toolbox/verification";
+import {
+  expandValidateConfig,
+  validateVerification,
+  type ValidateBatchConfig,
+  type ValidateVerificationParams,
+  type ValidateVerificationResult,
+} from "@bgd-labs/toolbox/verification";
+
+/**
+ * Fill in api keys / proxy url from the environment when a job didn't set them.
+ * Only the etherscan-compatible explorers need a key; OKLink ignores it.
+ */
+function withEnvKeys(job: ValidateVerificationParams): ValidateVerificationParams {
+  return {
+    ...job,
+    apiKey: job.apiKey ?? process.env.ETHERSCAN_API_KEY,
+    apiUrl: job.apiUrl ?? process.env.EXPLORER_PROXY,
+  };
+}
+
+function printResult(result: ValidateVerificationResult) {
+  // `null` means different things by context: for runtime it is a real "no
+  // match", for creation it just means we never supplied a creator tx.
+  const matchLabel = (status: ValidateVerificationResult["runtimeMatch"]) =>
+    status === "perfect"
+      ? "✅ perfect (incl. metadata)"
+      : status === "partial"
+        ? "🟡 partial (modulo metadata)"
+        : status === null
+          ? "❌ no match"
+          : `❌ ${status}`;
+  console.table({
+    address: result.address,
+    chainId: result.chainId,
+    contract: result.contractName,
+    compiler: result.compilerVersion,
+    proxy: result.isProxy ? result.implementation : "no",
+    verifiedAddress: result.verifiedAddress,
+    explorerClaimsVerified: result.explorerClaimedVerified,
+    runtimeMatch: matchLabel(result.runtimeMatch),
+  });
+}
 
 export function registerValidateVerification(program: Command) {
   program
     .command("validateVerification")
     .description(
-      "independently verify that an explorer's source compiles to the on-chain bytecode",
+      "independently verify that an explorer's source compiles to the on-chain bytecode (supports batch via --config)",
     )
     .addOption(
       new Option(
-        "--contractAddress <address>",
-        "address of the contract to verify",
-      ).makeOptionMandatory(),
+        "--config <path>",
+        "json config for batch validation (see README); when set, the flags below are ignored",
+      ),
     )
-    .addOption(
-      new Option("--chainId <number>", "chain id of the contract")
-        .makeOptionMandatory(),
-    )
+    .addOption(new Option("--contractAddress <address>", "address of the contract to verify"))
+    .addOption(new Option("--chainId <number>", "chain id of the contract"))
     .addOption(
       new Option("--rpc-url <url>", "rpc url (defaults to the toolbox's resolved url)"),
     )
     .addOption(
-      new Option("--explorer <name>", "explorer to source verification data from")
-        .choices(["etherscan", "blockscout", "routescan", "oklink", "sourcify"]),
+      new Option("--explorer <name>", "explorer to source verification data from").choices([
+        "etherscan",
+        "blockscout",
+        "routescan",
+        "oklink",
+        "sourcify",
+      ]),
     )
     .addOption(
-      new Option("--no-proxy", "verify the address as-is instead of following proxies"),
+      new Option("-o, --output <format>").choices(["table", "json"]).default("table"),
     )
-    .addOption(
-      new Option("-o, --output <format>")
-        .choices(["table", "json"])
-        .default("table"),
-    )
-    .action(
-      async ({ contractAddress, chainId, rpcUrl, explorer, proxy, output }) => {
-        if (explorer === "sourcify") {
-          throw new Error(
-            "The sourcify explorer adapter is not implemented yet; use etherscan or blockscout.",
-          );
-        }
-        const result = await validateVerification({
-          chainId: Number(chainId),
-          address: contractAddress as Address,
-          rpcUrl,
-          explorer,
-          apiKey: process.env.ETHERSCAN_API_KEY,
-          apiUrl: process.env.EXPLORER_PROXY,
-          resolveProxy: proxy,
-        });
-
-        if (output === "json") {
-          console.log(JSON.stringify(result, null, 2));
-        } else {
-          // `null` means different things by context: for runtime it is a real
-          // "no match", for creation it just means we never supplied a creator
-          // tx so it was not checked.
-          const matchLabel = (
-            status: typeof result.runtimeMatch,
-            nullLabel: string,
-          ) =>
-            status === "perfect"
-              ? "✅ perfect (incl. metadata)"
-              : status === "partial"
-                ? "🟡 partial (modulo metadata)"
-                : status === null
-                  ? nullLabel
-                  : `❌ ${status}`;
-          console.table({
-            address: result.address,
-            chainId: result.chainId,
-            contract: result.contractName,
-            compiler: result.compilerVersion,
-            proxy: result.isProxy ? result.implementation : "no",
-            verifiedAddress: result.verifiedAddress,
-            explorerClaimsVerified: result.explorerClaimedVerified,
-            runtimeMatch: matchLabel(result.runtimeMatch, "❌ no match"),
-          });
-        }
-
-        // CI gate: a missing runtime match means the explorer source does not
-        // reproduce the deployed bytecode.
-        if (result.runtimeMatch === null || result.runtimeMatch === "error") {
-          process.exitCode = 1;
-        }
-      },
+    .action((opts) =>
+      run(opts).catch((e) => {
+        console.error(`Error: ${(e as Error).message}`);
+        process.exit(1);
+      }),
     );
+}
+
+async function run(opts: {
+  config?: string;
+  contractAddress?: string;
+  chainId?: string;
+  rpcUrl?: string;
+  explorer?: "etherscan" | "blockscout" | "routescan" | "oklink" | "sourcify";
+  output?: string;
+}) {
+  if (opts.explorer === "sourcify") {
+    throw new Error(
+      "The sourcify explorer adapter is not implemented yet; use etherscan or blockscout.",
+    );
+  }
+  const verbose = opts.output !== "json";
+
+  let jobs: ValidateVerificationParams[];
+  if (opts.config) {
+    const parsed = JSON.parse(readFileSync(opts.config, "utf8")) as ValidateBatchConfig;
+    jobs = expandValidateConfig(parsed).map(withEnvKeys);
+    if (verbose) console.log(`Loaded ${jobs.length} contract(s) from ${opts.config}`);
+  } else {
+    if (!opts.contractAddress || !opts.chainId) {
+      throw new Error("provide --config, or both --contractAddress and --chainId");
+    }
+    jobs = [
+      withEnvKeys({
+        chainId: Number(opts.chainId),
+        address: opts.contractAddress as Address,
+        rpcUrl: opts.rpcUrl,
+        explorer: opts.explorer,
+      }),
+    ];
+  }
+
+  const results: ValidateVerificationResult[] = [];
+  for (const job of jobs) {
+    if (verbose) console.log(`\nValidating ${job.address} on chain ${job.chainId}…`);
+    const result = await validateVerification(job);
+    results.push(result);
+    if (verbose) printResult(result);
+  }
+
+  if (opts.output === "json") {
+    console.log(JSON.stringify(opts.config ? results : results[0], null, 2));
+  }
+
+  // CI gate: a missing runtime match means the source does not reproduce the
+  // deployed bytecode.
+  if (results.some((r) => r.runtimeMatch === null || r.runtimeMatch === "error")) {
+    process.exitCode = 1;
+  }
 }

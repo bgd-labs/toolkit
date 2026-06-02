@@ -38,11 +38,6 @@ export type ValidateVerificationParams = {
    * and other chains use the prioritized explorer.
    */
   explorer?: ExplorerName;
-  /**
-   * When true (default), EIP-1967 / explorer-reported proxies are followed and
-   * the implementation contract is verified instead of the proxy shell.
-   */
-  resolveProxy?: boolean;
 };
 
 export type ValidateVerificationResult = {
@@ -80,8 +75,7 @@ export type ValidateVerificationResult = {
 export async function validateVerification(
   params: ValidateVerificationParams,
 ): Promise<ValidateVerificationResult> {
-  const { chainId, address, apiKey, apiUrl, explorer, resolveProxy = true } =
-    params;
+  const { chainId, address, apiKey, apiUrl, explorer } = params;
   // Resolve an rpc: explicit > toolbox's resolved url > the chain's default rpc.
   const rpcUrl =
     params.rpcUrl ??
@@ -108,19 +102,17 @@ export async function validateVerification(
     explorer,
   });
 
-  let implementation: Address | undefined;
-  if (resolveProxy) {
-    // EIP-1967 slot is the source of truth; fall back to the explorer's own
-    // proxy hint for non-standard proxies it happens to recognise.
-    implementation = await resolveImplementation({
-      address,
-      client,
-      explorerSource: rootSource as {
-        Proxy?: string;
-        Implementation?: string;
-      },
-    });
-  }
+  // EIP-1967 slot is the source of truth; fall back to the explorer's own proxy
+  // hint for non-standard proxies it happens to recognise. Resolving a
+  // non-proxy is a no-op (returns undefined).
+  const implementation = await resolveImplementation({
+    address,
+    client,
+    explorerSource: rootSource as {
+      Proxy?: string;
+      Implementation?: string;
+    },
+  });
 
   const verifiedAddress = implementation ?? address;
   const source =
