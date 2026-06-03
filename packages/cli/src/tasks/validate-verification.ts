@@ -9,18 +9,6 @@ import {
   type ValidateVerificationResult,
 } from "@bgd-labs/toolbox/verification";
 
-/**
- * Fill in api keys / proxy url from the environment when a job didn't set them.
- * Only the etherscan-compatible explorers need a key; OKLink ignores it.
- */
-function withEnvKeys(job: ValidateVerificationParams): ValidateVerificationParams {
-  return {
-    ...job,
-    apiKey: job.apiKey ?? process.env.ETHERSCAN_API_KEY,
-    apiUrl: job.apiUrl ?? process.env.EXPLORER_PROXY,
-  };
-}
-
 function printResult(result: ValidateVerificationResult) {
   // `null` means different things by context: for runtime it is a real "no
   // match", for creation it just means we never supplied a creator tx.
@@ -64,7 +52,6 @@ export function registerValidateVerification(program: Command) {
         "blockscout",
         "routescan",
         "oklink",
-        "sourcify",
       ]),
     )
     .addOption(
@@ -82,31 +69,26 @@ async function run(opts: {
   config?: string;
   contractAddress?: string;
   chainId?: string;
-  explorer?: "etherscan" | "blockscout" | "routescan" | "oklink" | "sourcify";
+  explorer?: "etherscan" | "blockscout" | "routescan" | "oklink";
   output?: string;
 }) {
-  if (opts.explorer === "sourcify") {
-    throw new Error(
-      "The sourcify explorer adapter is not implemented yet; use etherscan or blockscout.",
-    );
-  }
   const verbose = opts.output !== "json";
 
   let jobs: ValidateVerificationParams[];
   if (opts.config) {
     const parsed = JSON.parse(readFileSync(opts.config, "utf8")) as ValidateBatchConfig;
-    jobs = expandValidateConfig(parsed).map(withEnvKeys);
+    jobs = expandValidateConfig(parsed);
     if (verbose) console.log(`Loaded ${jobs.length} contract(s) from ${opts.config}`);
   } else {
     if (!opts.contractAddress || !opts.chainId) {
       throw new Error("provide --config, or both --contractAddress and --chainId");
     }
     jobs = [
-      withEnvKeys({
+      {
         chainId: Number(opts.chainId),
         address: opts.contractAddress as Address,
         explorer: opts.explorer,
-      }),
+      },
     ];
   }
 

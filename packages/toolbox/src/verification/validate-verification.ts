@@ -68,7 +68,11 @@ export type ValidateVerificationResult = {
 export async function validateVerification(
   params: ValidateVerificationParams,
 ): Promise<ValidateVerificationResult> {
-  const { chainId, address, apiKey, apiUrl, explorer } = params;
+  const { chainId, address, explorer } = params;
+  // The explorer api key / proxy url default from the env so callers (and the
+  // CLI) don't have to thread them through.
+  const apiKey = params.apiKey ?? process.env.ETHERSCAN_API_KEY;
+  const apiUrl = params.apiUrl ?? process.env.EXPLORER_PROXY;
   // Resolve the rpc + client via the toolbox's getClient, which reads provider
   // keys from the env (RPC_<CHAIN> / ALCHEMY_API_KEY / QUICKNODE_*, then a public
   // rpc). lib-sourcify needs the url string too, so we read it off the transport.

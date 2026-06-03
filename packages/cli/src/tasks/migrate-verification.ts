@@ -11,23 +11,6 @@ import {
 
 const EXPLORERS = ["etherscan", "blockscout", "routescan", "oklink"] as const;
 
-/**
- * Fill in api keys / proxy url from the environment when a job didn't set them.
- * Only the etherscan-compatible explorers need a key; OKLink ignores it, so a
- * single `ETHERSCAN_API_KEY` default covers every family.
- */
-function withEnvKeys(job: MigrateVerificationParams): MigrateVerificationParams {
-  return {
-    ...job,
-    from: {
-      ...job.from,
-      apiKey: job.from.apiKey ?? process.env.ETHERSCAN_API_KEY,
-      apiUrl: job.from.apiUrl ?? process.env.EXPLORER_PROXY,
-    },
-    to: { ...job.to, apiKey: job.to.apiKey ?? process.env.ETHERSCAN_API_KEY },
-  };
-}
-
 function printSummary(result: MigrateVerificationResult) {
   const icon = (status: string) =>
     status === "verified"
@@ -85,10 +68,6 @@ export function registerMigrateVerification(program: Command) {
     .addOption(
       new Option("--toExplorer <name>", "explorer to publish the verification to").choices(EXPLORERS),
     )
-    .addOption(new Option("--fromApiKey <key>", "source explorer api key (defaults to env)"))
-    .addOption(new Option("--toApiKey <key>", "target explorer api key (defaults to env)"))
-    .addOption(new Option("--fromApiUrl <url>", "api url override for the source explorer"))
-    .addOption(new Option("--toApiUrl <url>", "api url override for the target explorer"))
     .addOption(new Option("--no-wait", "submit without polling for the verification result"))
     .addOption(
       new Option(
@@ -115,10 +94,6 @@ async function run(opts: {
   toChainId?: string;
   fromExplorer?: (typeof EXPLORERS)[number];
   toExplorer?: (typeof EXPLORERS)[number];
-  fromApiKey?: string;
-  toApiKey?: string;
-  fromApiUrl?: string;
-  toApiUrl?: string;
   wait?: boolean;
   pollTimeout?: string;
   output?: string;
@@ -129,7 +104,7 @@ async function run(opts: {
   let jobs: MigrateVerificationParams[];
   if (opts.config) {
     const parsed = JSON.parse(readFileSync(opts.config, "utf8")) as MigrateBatchConfig;
-    jobs = expandMigrateConfig(parsed).map(withEnvKeys);
+    jobs = expandMigrateConfig(parsed);
     if (verbose) console.log(`Loaded ${jobs.length} migration(s) from ${opts.config}`);
   } else {
     if (!opts.fromContract || !opts.fromChainId || !opts.toExplorer) {
@@ -138,24 +113,20 @@ async function run(opts: {
       );
     }
     jobs = [
-      withEnvKeys({
+      {
         from: {
           chainId: Number(opts.fromChainId),
           address: opts.fromContract as Address,
           explorer: opts.fromExplorer,
-          apiKey: opts.fromApiKey,
-          apiUrl: opts.fromApiUrl,
         },
         to: {
           chainId: Number(opts.toChainId ?? opts.fromChainId),
           address: (opts.toContract ?? opts.fromContract) as Address,
           explorer: opts.toExplorer,
-          apiKey: opts.toApiKey,
-          apiUrl: opts.toApiUrl,
         },
         wait: opts.wait,
         pollTimeoutMs: opts.pollTimeout ? Number(opts.pollTimeout) * 1000 : undefined,
-      }),
+      },
     ];
   }
 

@@ -270,8 +270,16 @@ async function migrateOne(
 export async function migrateVerification(
   params: MigrateVerificationParams,
 ): Promise<MigrateVerificationResult> {
-  const { from, to } = params;
   const log = params.onLog;
+  const from = {
+    ...params.from,
+    apiKey: params.from.apiKey ?? process.env.ETHERSCAN_API_KEY,
+    apiUrl: params.from.apiUrl ?? process.env.EXPLORER_PROXY,
+  };
+  const to = {
+    ...params.to,
+    apiKey: params.to.apiKey ?? process.env.ETHERSCAN_API_KEY,
+  };
 
   // The origin must actually have the source for the root address.
   let rootSource: Awaited<ReturnType<typeof getSourceCode>>;
