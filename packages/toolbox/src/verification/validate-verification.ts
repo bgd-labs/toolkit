@@ -9,16 +9,11 @@ import {
   decode,
   type SolidityDecodedObject,
 } from "@ethereum-sourcify/bytecode-utils";
-import {
-  createPublicClient,
-  http,
-  type Address,
-  type Chain,
-} from "viem";
+import { type Address } from "viem";
 import { getCode } from "viem/actions";
 import { getSourceCode, type ExplorerName } from "../ecosystem/explorers";
 import { ChainList } from "../ecosystem/chainIds";
-import { getRPCUrl, type SupportedChainIds } from "../ecosystem/rpcs";
+import { getClient } from "../ecosystem/rpcs";
 import { createSolcCompiler } from "./compiler";
 import { normalizeExplorerSource } from "./normalize";
 import { resolveImplementation } from "./proxy";
@@ -26,8 +21,6 @@ import { resolveImplementation } from "./proxy";
 export type ValidateVerificationParams = {
   chainId: number;
   address: Address;
-  /** Explicit RPC url. Falls back to the toolbox's resolved url when omitted. */
-  rpcUrl?: string;
   /** Explorer api key (etherscan-style). */
   apiKey?: string;
   /** Explorer api url override (e.g. a proxy). Takes precedence over `explorer`. */
@@ -76,20 +69,22 @@ export async function validateVerification(
   params: ValidateVerificationParams,
 ): Promise<ValidateVerificationResult> {
   const { chainId, address, apiKey, apiUrl, explorer } = params;
-  // Resolve an rpc: explicit > toolbox's resolved url > the chain's default rpc.
-  const rpcUrl =
-    params.rpcUrl ??
-    getRPCUrl(chainId as SupportedChainIds) ??
-    ChainList[chainId as keyof typeof ChainList]?.rpcUrls?.default?.http?.[0];
+  // Resolve the rpc + client via the toolbox's getClient, which reads provider
+  // keys from the env (RPC_<CHAIN> / ALCHEMY_API_KEY / QUICKNODE_*, then a public
+  // rpc). lib-sourcify needs the url string too, so we read it off the transport.
+  const client = getClient(chainId as keyof typeof ChainList, {
+    providerConfig: {
+      alchemyKey: process.env.ALCHEMY_API_KEY,
+      quicknodeToken: process.env.QUICKNODE_TOKEN,
+      quicknodeEndpointName: process.env.QUICKNODE_ENDPOINT_NAME,
+    },
+  });
+  const rpcUrl = (client.transport as { url?: string }).url;
   if (!rpcUrl) {
     throw new Error(
-      `No rpc url available for chain ${chainId}; pass one explicitly via rpcUrl.`,
+      `No rpc url available for chain ${chainId}; set RPC_<CHAIN> or a provider key (ALCHEMY_API_KEY / QUICKNODE_*) in the env.`,
     );
   }
-  const client = createPublicClient({
-    chain: ChainList[chainId as keyof typeof ChainList] as Chain | undefined,
-    transport: http(rpcUrl),
-  });
 
   // 1. Pull the explorer payload for the requested address first, so we can use
   //    its proxy hints alongside the on-chain EIP-1967 slot. getSourceCode owns

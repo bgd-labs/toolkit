@@ -11,6 +11,10 @@ Make sure to setup your .env
 # (etherscan, routescan). OKLink needs no key.
 ETHERSCAN_API_KEY=
 
+# RPC for on-chain reads (proxy resolution + bytecode validation). Resolved in
+# order: RPC_<CHAIN> (e.g. RPC_MAINNET) > ALCHEMY_API_KEY > QUICKNODE_* > public rpc.
+ALCHEMY_API_KEY=
+
 # Used for creating tenderly vnets
 TENDERLY_ACCESS_TOKEN=
 TENDERLY_PROJECT_SLUG=
@@ -93,7 +97,6 @@ Usage: @bgd-labs/cli validateVerification [options]
 Options:
   --contractAddress <address>  address of the contract to verify
   --chainId <number>           chain id of the contract
-  --rpc-url <url>              rpc url (defaults to the toolbox's resolved url)
   --explorer <name>            explorer to source verification data from
                                (choices: "etherscan", "blockscout", "routescan", "oklink")
   -o, --output <format>        (choices: "table", "json", default: "table")
@@ -110,7 +113,7 @@ npx @bgd-labs/cli validateVerification --contractAddress 0xa0208CE8356ad6C5EC6dF
 
 ### Batch (`--config`)
 
-Pass `--config <path>` to validate many contracts in one run (the flags above are ignored). The JSON has optional shared `defaults` plus a `contracts` list — each entry is a bare address (using the defaults) or an object overriding any of `chainId` / `explorer` / `rpcUrl`:
+Pass `--config <path>` to validate many contracts in one run (the flags above are ignored). The JSON has optional shared `defaults` plus a `contracts` list — each entry is a bare address (using the defaults) or an object overriding any of `chainId` / `explorer`:
 
 ```json
 {
@@ -147,8 +150,6 @@ Options:
   --toApiKey <key>          target explorer api key (defaults to env.ETHERSCAN_API_KEY)
   --fromApiUrl <url>        api url override for the source explorer
   --toApiUrl <url>          api url override for the target explorer
-  --fromRpcUrl <url>        rpc url for proxy resolution on the source chain
-  --toRpcUrl <url>          rpc url for proxy resolution on the target chain
   --no-wait                 submit without polling for the verification result
   --pollTimeout <seconds>   max seconds to wait for verification (polls every 10s, default 180)
   -o, --output <format>     (choices: "table", "json", default: "table")

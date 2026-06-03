@@ -59,9 +59,6 @@ export function registerValidateVerification(program: Command) {
     .addOption(new Option("--contractAddress <address>", "address of the contract to verify"))
     .addOption(new Option("--chainId <number>", "chain id of the contract"))
     .addOption(
-      new Option("--rpc-url <url>", "rpc url (defaults to the toolbox's resolved url)"),
-    )
-    .addOption(
       new Option("--explorer <name>", "explorer to source verification data from").choices([
         "etherscan",
         "blockscout",
@@ -85,7 +82,6 @@ async function run(opts: {
   config?: string;
   contractAddress?: string;
   chainId?: string;
-  rpcUrl?: string;
   explorer?: "etherscan" | "blockscout" | "routescan" | "oklink" | "sourcify";
   output?: string;
 }) {
@@ -109,7 +105,6 @@ async function run(opts: {
       withEnvKeys({
         chainId: Number(opts.chainId),
         address: opts.contractAddress as Address,
-        rpcUrl: opts.rpcUrl,
         explorer: opts.explorer,
       }),
     ];

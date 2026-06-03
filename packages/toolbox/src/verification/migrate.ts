@@ -1,4 +1,4 @@
-import { createPublicClient, http, type Address, type Chain } from "viem";
+import { type Address } from "viem";
 import {
   getSourceCode,
   isVerified,
@@ -7,7 +7,7 @@ import {
   type ExplorerName,
 } from "../ecosystem/explorers";
 import { ChainList } from "../ecosystem/chainIds";
-import { getRPCUrl, type SupportedChainIds } from "../ecosystem/rpcs";
+import { getClient } from "../ecosystem/rpcs";
 import { normalizeExplorerSource } from "./normalize";
 import { resolveImplementation } from "./proxy";
 
@@ -26,8 +26,6 @@ export type MigrationEndpoint = {
   apiKey?: string;
   /** Explorer api url override (e.g. a proxy). */
   apiUrl?: string;
-  /** Rpc url for EIP-1967 proxy resolution; falls back to the toolbox's url. */
-  rpcUrl?: string;
 };
 
 export type MigrateVerificationParams = {
@@ -77,25 +75,22 @@ export type MigrateVerificationResult = {
   targets: MigrateTargetResult[];
 };
 
-/** Best-effort viem client for proxy resolution; `undefined` when no rpc resolves. */
-function createClient(chainId: number, rpcUrl?: string) {
-  let url = rpcUrl;
-  if (!url) {
-    try {
-      // getRPCUrl throws for chains it doesn't know; proxy resolution is
-      // optional here, so fall through to the chain default / no client.
-      url = getRPCUrl(chainId as SupportedChainIds);
-    } catch {
-      // ignored
-    }
+/** Best-effort viem client for proxy resolution; `undefined` when none resolves. */
+function createClient(chainId: number) {
+  try {
+    // getClient resolves the rpc from the env (RPC_<CHAIN> / ALCHEMY_API_KEY /
+    // QUICKNODE_*, then a public rpc) and caches the client. It throws for
+    // unknown chains, which is fine here since proxy resolution is best-effort.
+    return getClient(chainId as keyof typeof ChainList, {
+      providerConfig: {
+        alchemyKey: process.env.ALCHEMY_API_KEY,
+        quicknodeToken: process.env.QUICKNODE_TOKEN,
+        quicknodeEndpointName: process.env.QUICKNODE_ENDPOINT_NAME,
+      },
+    });
+  } catch {
+    return undefined;
   }
-  url =
-    url ?? ChainList[chainId as keyof typeof ChainList]?.rpcUrls?.default?.http?.[0];
-  if (!url) return undefined;
-  return createPublicClient({
-    chain: ChainList[chainId as keyof typeof ChainList] as Chain | undefined,
-    transport: http(url),
-  });
 }
 
 /** The explorer-call fields of an endpoint (everything but the address). */
@@ -305,7 +300,7 @@ export async function migrateVerification(
   let implTo: Address | undefined;
   const implFrom = await resolveImplementation({
     address: from.address,
-    client: createClient(from.chainId, from.rpcUrl),
+    client: createClient(from.chainId),
     explorerSource: rootSource as { Proxy?: string; Implementation?: string },
   });
   if (implFrom) {
@@ -316,7 +311,7 @@ export async function migrateVerification(
       ? implFrom
       : ((await resolveImplementation({
           address: to.address,
-          client: createClient(to.chainId, to.rpcUrl),
+          client: createClient(to.chainId),
         })) ?? implFrom);
   }
 

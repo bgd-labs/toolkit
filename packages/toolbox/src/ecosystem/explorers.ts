@@ -1,8 +1,9 @@
 import { Address, Hex } from "viem";
 import { etherscanExplorers } from "./generated/etherscanExplorers";
 import { routescanExplorers } from "./generated/routescanExplorers";
+import { blockscoutExplorers } from "./generated/blockscoutExplorers";
 import { StandardJsonInput } from "./types";
-import { blockscoutExplorers, ChainId } from "..";
+import { ChainId } from "./chainIds";
 
 export type ExplorerConfig = { api: string; explorer: string };
 

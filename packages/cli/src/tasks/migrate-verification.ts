@@ -89,8 +89,6 @@ export function registerMigrateVerification(program: Command) {
     .addOption(new Option("--toApiKey <key>", "target explorer api key (defaults to env)"))
     .addOption(new Option("--fromApiUrl <url>", "api url override for the source explorer"))
     .addOption(new Option("--toApiUrl <url>", "api url override for the target explorer"))
-    .addOption(new Option("--fromRpcUrl <url>", "rpc url for proxy resolution on the source chain"))
-    .addOption(new Option("--toRpcUrl <url>", "rpc url for proxy resolution on the target chain"))
     .addOption(new Option("--no-wait", "submit without polling for the verification result"))
     .addOption(
       new Option(
@@ -121,8 +119,6 @@ async function run(opts: {
   toApiKey?: string;
   fromApiUrl?: string;
   toApiUrl?: string;
-  fromRpcUrl?: string;
-  toRpcUrl?: string;
   wait?: boolean;
   pollTimeout?: string;
   output?: string;
@@ -149,7 +145,6 @@ async function run(opts: {
           explorer: opts.fromExplorer,
           apiKey: opts.fromApiKey,
           apiUrl: opts.fromApiUrl,
-          rpcUrl: opts.fromRpcUrl,
         },
         to: {
           chainId: Number(opts.toChainId ?? opts.fromChainId),
@@ -157,7 +152,6 @@ async function run(opts: {
           explorer: opts.toExplorer,
           apiKey: opts.toApiKey,
           apiUrl: opts.toApiUrl,
-          rpcUrl: opts.toRpcUrl,
         },
         wait: opts.wait,
         pollTimeoutMs: opts.pollTimeout ? Number(opts.pollTimeout) * 1000 : undefined,

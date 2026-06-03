@@ -95,7 +95,6 @@ export type ValidateBatchContract =
       address: Address;
       chainId?: number;
       explorer?: ExplorerName;
-      rpcUrl?: string;
       apiKey?: string;
       apiUrl?: string;
     };
@@ -108,7 +107,6 @@ export type ValidateBatchConfig = {
   defaults?: {
     chainId?: number;
     explorer?: ExplorerName;
-    rpcUrl?: string;
     apiKey?: string;
     apiUrl?: string;
   };
@@ -141,7 +139,6 @@ export function expandValidateConfig(
       chainId,
       address: c.address as Address,
       explorer: c.explorer ?? d.explorer,
-      rpcUrl: c.rpcUrl ?? d.rpcUrl,
       apiKey: c.apiKey ?? d.apiKey,
       apiUrl: c.apiUrl ?? d.apiUrl,
     };
