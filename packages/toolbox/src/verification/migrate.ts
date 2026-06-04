@@ -75,7 +75,6 @@ export type MigrateVerificationResult = {
   targets: MigrateTargetResult[];
 };
 
-/** Best-effort viem client for proxy resolution; `undefined` when none resolves. */
 function createClient(chainId: number) {
   try {
     // getClient resolves the rpc from the env (RPC_<CHAIN> / ALCHEMY_API_KEY /

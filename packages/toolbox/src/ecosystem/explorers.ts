@@ -84,11 +84,10 @@ const okLinkChainShortNames: Record<number, string> = {
   [ChainId.mainnet]: "ETH",
   [ChainId.bnb]: "BSC",
   [ChainId.polygon]: "POLYGON",
-  [ChainId.zkEVM]: "POLYGON_ZKEVM",
   [ChainId.avalanche]: "AVAXC",
-  [ChainId.fantom]: "FTM",
   [ChainId.optimism]: "OP",
   [ChainId.arbitrum]: "ARBITRUM",
+  [ChainId.gnosis]: "GNOSIS",
   [ChainId.base]: "BASE",
   [ChainId.linea]: "LINEA",
   [ChainId.scroll]: "SCROLL",
@@ -128,7 +127,7 @@ export type BlockscoutStyleSourceCode = {
 };
 
 export async function getSourceCode(params: GetSourceCodeParams) {
-  // OKLink (used for xLayer) speaks a different API; route to it explicitly when
+  // OKLink speaks a different API; route to it explicitly when
   // requested, and keep it as the default for xLayer.
   if (
     params.explorer === "oklink" ||
@@ -255,8 +254,7 @@ export type VerifySubmission = {
  * normalizes it to end in `/api`: routescan exposes the compatibility layer at
  * `/etherscan`, whereas etherscan and blockscout already include `/api`.
  *
- * OKLink exposes its own etherscan-compatible "plugin" endpoint (the one Hardhat
- * and Foundry verify against) at `/verify-source-code-plugin/{chainName}`, which
+ * OKLink exposes its own etherscan-compatible "plugin" endpoint, which
  * we resolve from {@link okLinkChainShortNames} and use verbatim (no `/api`).
  */
 function resolveEtherscanCompatibleApi(params: {

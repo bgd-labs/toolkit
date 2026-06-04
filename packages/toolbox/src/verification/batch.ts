@@ -12,8 +12,6 @@ import {
   type ValidateVerificationResult,
 } from "./validate-verification";
 
-// --- migrate batch ----------------------------------------------------------
-
 /**
  * A contract in a migrate batch: either a single address (used on both sides) or
  * `{ from, to }` to point at different addresses on the source and target.
@@ -82,8 +80,6 @@ export async function migrateVerificationBatch(
   }
   return results;
 }
-
-// --- validate batch ---------------------------------------------------------
 
 /**
  * A contract in a validate batch: either a bare address (using the config
