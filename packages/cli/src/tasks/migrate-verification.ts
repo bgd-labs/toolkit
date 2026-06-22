@@ -9,7 +9,13 @@ import {
   type MigrateVerificationResult,
 } from "@bgd-labs/toolbox/verification";
 
-const EXPLORERS = ["etherscan", "blockscout", "routescan", "oklink"] as const;
+const EXPLORERS = [
+  "etherscan",
+  "blockscout",
+  "routescan",
+  "oklink",
+  "sourcify",
+] as const;
 
 function printSummary(result: MigrateVerificationResult) {
   const icon = (status: string) =>

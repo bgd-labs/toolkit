@@ -31,9 +31,15 @@ export function getExplorer(chainId: number): ExplorerConfig {
 /**
  * Explorer families understood by the tooling. The first three are
  * etherscan-compatible and resolvable via {@link getExplorerByName}; `oklink`
- * speaks a bespoke API and is fetched directly by {@link getSourceCode}.
+ * and `sourcify` speak bespoke APIs and are routed directly (see
+ * {@link getSourceCode} / {@link verifySourceCode} / {@link checkVerificationStatus}).
  */
-export type ExplorerName = "etherscan" | "routescan" | "blockscout" | "oklink";
+export type ExplorerName =
+  | "etherscan"
+  | "routescan"
+  | "blockscout"
+  | "oklink"
+  | "sourcify";
 
 /**
  * Fetches the config for a specific etherscan-style explorer family on a given
@@ -127,6 +133,10 @@ export type BlockscoutStyleSourceCode = {
 };
 
 export async function getSourceCode(params: GetSourceCodeParams) {
+  // Sourcify speaks its own v2 API; route to it when explicitly requested.
+  if (params.explorer === "sourcify") {
+    return getSourcifySourceCode(params);
+  }
   // OKLink speaks a different API; route to it explicitly when
   // requested, and keep it as the default for xLayer.
   if (
@@ -293,6 +303,10 @@ function resolveEtherscanCompatibleApi(params: {
 export async function verifySourceCode(
   params: VerifySourceCodeParams,
 ): Promise<VerifySubmission> {
+  // Sourcify uses its own v2 verify API (json body, async job).
+  if (params.explorer === "sourcify") {
+    return verifySourcifySourceCode(params);
+  }
   const apiUrl = resolveEtherscanCompatibleApi(params);
   // Routing params (module/action/apikey/chainid) go on the query string, where
   // most explorers dispatch on them. We also repeat them in the POST body
@@ -379,6 +393,10 @@ export type CheckVerificationStatusParams = {
 export async function checkVerificationStatus(
   params: CheckVerificationStatusParams,
 ): Promise<VerificationStatusResult> {
+  // Sourcify polls a job by its verificationId via its own v2 endpoint.
+  if (params.explorer === "sourcify") {
+    return checkSourcifyVerificationStatus(params);
+  }
   const apiUrl = resolveEtherscanCompatibleApi(params);
   const query: Record<string, string> = {
     chainid: String(params.chainId),
@@ -504,4 +522,129 @@ async function getOkLinkSourceCode(params: GetSourceCodeParams) {
     Proxy: data[0].proxy,
     Runs: data[0].optimizationRuns,
   };
+}
+
+/** Sourcify's public verification server (its own v2 API, no api key needed). */
+const SOURCIFY_SERVER = "https://sourcify.dev/server";
+
+/**
+ * Reads a verified contract from Sourcify's v2 API and maps it onto the
+ * etherscan-style shape the rest of the toolbox consumes. Sourcify returns the
+ * exact solc standard-json (`stdJsonInput`), compiler version and constructor
+ * arguments, so we stringify the json into `SourceCode` (which
+ * {@link parseEtherscanStyleSourceCode}/`normalizeExplorerSource` already handle
+ * as a single-wrapped standard-json input). Throws when the contract is not
+ * verified on Sourcify.
+ */
+async function getSourcifySourceCode(params: GetSourceCodeParams) {
+  const base = params.apiUrl ?? SOURCIFY_SERVER;
+  const url = `${base}/v2/contract/${params.chainId}/${params.address}?fields=compilation,stdJsonInput,creationBytecode`;
+  const request = await fetch(url);
+  const data = (await request.json()) as {
+    match?: string | null;
+    compilation?: { compilerVersion?: string; name?: string };
+    stdJsonInput?: { settings?: { evmVersion?: string } };
+    creationBytecode?: { transformationValues?: { constructorArguments?: string } };
+  };
+  if (!request.ok || !data.stdJsonInput || !data.compilation?.compilerVersion) {
+    throw new Error(
+      `Sourcify has no verified contract for ${params.address} on chain ${params.chainId}`,
+    );
+  }
+  return {
+    SourceCode: JSON.stringify(data.stdJsonInput),
+    ABI: "",
+    CompilerVersion: data.compilation.compilerVersion,
+    ConstructorArguments: (data.creationBytecode?.transformationValues
+      ?.constructorArguments ?? "") as Hex,
+    ContractName: data.compilation.name ?? "",
+    EVMVersion: data.stdJsonInput.settings?.evmVersion ?? "",
+    Implementation: "" as Address,
+    Library: "",
+    LicenseType: "",
+    OptimizationUsed: "",
+    Proxy: "0",
+    Runs: "",
+    SimilarMatch: "",
+  } satisfies EtherscanStyleSourceCode;
+}
+
+/**
+ * Submits a contract to Sourcify's v2 verify API. Maps the toolbox's
+ * etherscan-style {@link VerifySourceCodeParams} (a stringified standard-json
+ * `sourceCode`, a `path:Name` `contractName`, a `v`-prefixed compiler version)
+ * onto Sourcify's json body, and returns the `verificationId` to poll.
+ */
+async function verifySourcifySourceCode(
+  params: VerifySourceCodeParams,
+): Promise<VerifySubmission> {
+  const base = params.apiUrl ?? SOURCIFY_SERVER;
+  const body = {
+    stdJsonInput: JSON.parse(params.sourceCode),
+    compilerVersion: params.compilerVersion.replace(/^v/, ""),
+    contractIdentifier: params.contractName,
+  };
+  const request = await fetch(
+    `${base}/v2/verify/${params.chainId}/${params.address}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
+  const data = (await request.json().catch(() => ({}))) as {
+    verificationId?: string;
+    customCode?: string;
+    message?: string;
+  };
+  if (request.status === 409 || data.customCode === "already_verified") {
+    return { guid: null, alreadyVerified: true };
+  }
+  if (data.verificationId) {
+    return { guid: data.verificationId, alreadyVerified: false };
+  }
+  throw new Error(
+    `Sourcify verification failed: ${data.message ?? `status ${request.status}`}`,
+  );
+}
+
+/**
+ * Polls a Sourcify verification job by its `verificationId` (the `guid`). The
+ * endpoint returns 200 even on failure, so the verdict lives in `isJobCompleted`
+ * + `contract.match` / `error`.
+ */
+async function checkSourcifyVerificationStatus(
+  params: CheckVerificationStatusParams,
+): Promise<VerificationStatusResult> {
+  const base = params.apiUrl ?? SOURCIFY_SERVER;
+  const request = await fetch(`${base}/v2/verify/${params.guid}`);
+  if (request.status === 404) {
+    return { state: "unknown", message: "verification job not found" };
+  }
+  const data = (await request.json()) as {
+    isJobCompleted?: boolean;
+    error?: { message?: string; customCode?: string };
+    contract?: { match?: string | null };
+  };
+  if (!data.isJobCompleted) {
+    return { state: "pending", message: "verification in progress" };
+  }
+  if (data.error) {
+    const message =
+      data.error.message ?? data.error.customCode ?? "verification failed";
+    // Re-submitting a contract that is already verified completes with an error
+    // ("already verified and the job didn't yield a better match") — that is a
+    // success, not a failure: the target already serves the source.
+    if (
+      data.error.customCode === "already_verified" ||
+      /already verified/i.test(message)
+    ) {
+      return { state: "verified", message };
+    }
+    return { state: "failed", message };
+  }
+  if (data.contract?.match) {
+    return { state: "verified", message: `sourcify ${data.contract.match}` };
+  }
+  return { state: "failed", message: "no match" };
 }

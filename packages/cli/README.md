@@ -8,7 +8,7 @@ Make sure to setup your .env
 
 ```
 # Used for code/storage diffs and for reading + publishing contract verification
-# (etherscan, routescan). OKLink needs no key.
+# (etherscan, routescan). OKLink and Sourcify need no key.
 ETHERSCAN_API_KEY=
 
 # RPC for on-chain reads (proxy resolution + bytecode validation). Resolved in
@@ -98,7 +98,7 @@ Options:
   --contractAddress <address>  address of the contract to verify
   --chainId <number>           chain id of the contract
   --explorer <name>            explorer to source verification data from
-                               (choices: "etherscan", "blockscout", "routescan", "oklink")
+                               (choices: "etherscan", "blockscout", "routescan", "oklink", "sourcify")
   -o, --output <format>        (choices: "table", "json", default: "table")
   -h, --help                   display help for command
 ```
@@ -142,7 +142,7 @@ Options:
   --fromContract <address>  address of the verified source contract
   --fromChainId <number>    chain id of the source contract
   --toExplorer <name>       explorer to publish the verification to
-                            (choices: "etherscan", "blockscout", "routescan", "oklink")
+                            (choices: "etherscan", "blockscout", "routescan", "oklink", "sourcify")
   --toContract <address>    address to verify on the target (defaults to --fromContract)
   --toChainId <number>      chain id of the target contract (defaults to --fromChainId)
   --fromExplorer <name>     explorer to read the source from (defaults to the chain's prioritized explorer)

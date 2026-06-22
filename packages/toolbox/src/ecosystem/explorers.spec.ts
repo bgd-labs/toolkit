@@ -48,6 +48,25 @@ describe("ecosystem:explorers", () => {
   );
 
   it.skipIf(process.env.CI)(
+    "getSourceCode downloads a contract from sourcify (DAI on mainnet)",
+    async () => {
+      const response = (await getSourceCode({
+        chainId: 1,
+        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+        explorer: "sourcify",
+      })) as {
+        ContractName: string;
+        CompilerVersion: string;
+        SourceCode: string;
+      };
+      // sourcify returns the standard-json input stringified into SourceCode
+      expect(response.ContractName).toEqual("Dai");
+      expect(response.CompilerVersion).toMatch(/^0\.5\.12/);
+      expect(response.SourceCode.startsWith("{")).toBe(true);
+    },
+  );
+
+  it.skipIf(process.env.CI)(
     "isVerified is true for a verified contract and false otherwise",
     async () => {
       // Aave V3 Pool proxy — verified on etherscan.

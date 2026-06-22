@@ -52,6 +52,7 @@ export function registerValidateVerification(program: Command) {
         "blockscout",
         "routescan",
         "oklink",
+        "sourcify",
       ]),
     )
     .addOption(
@@ -69,7 +70,7 @@ async function run(opts: {
   config?: string;
   contractAddress?: string;
   chainId?: string;
-  explorer?: "etherscan" | "blockscout" | "routescan" | "oklink";
+  explorer?: "etherscan" | "blockscout" | "routescan" | "oklink" | "sourcify";
   output?: string;
 }) {
   const verbose = opts.output !== "json";

@@ -13,3 +13,5 @@ Both commands accept a `--config <path>` JSON file to run in batch over many con
 
 New explorer helpers `isVerified`, `verifySourceCode`, `checkVerificationStatus` and `waitForVerification` sit next to `getSourceCode` and speak the etherscan-compatible verify API (etherscan, routescan, blockscout, and OKLink via its etherscan-compatible plugin endpoint). The source normalizer also handles single-wrapped standard-json sources (as OKLink returns them), so OKLink works as both a source and a target.
 
+Sourcify is supported too (as a source and a target, for both validate and migrate) via its own v2 API — `getSourceCode` / `verifySourceCode` / `checkVerificationStatus` route to Sourcify's `/v2/contract` (read) and `/v2/verify` (submit + poll by `verificationId`) endpoints. Like OKLink, Sourcify needs no API key.
+
