@@ -77,16 +77,10 @@ export type MigrateVerificationResult = {
 
 function createClient(chainId: number) {
   try {
-    // getClient resolves the rpc from the env (RPC_<CHAIN> / ALCHEMY_API_KEY /
-    // QUICKNODE_*, then a public rpc) and caches the client. It throws for
-    // unknown chains, which is fine here since proxy resolution is best-effort.
-    return getClient(chainId as keyof typeof ChainList, {
-      providerConfig: {
-        alchemyKey: process.env.ALCHEMY_API_KEY,
-        quicknodeToken: process.env.QUICKNODE_TOKEN,
-        quicknodeEndpointName: process.env.QUICKNODE_ENDPOINT_NAME,
-      },
-    });
+    // getClient resolves the rpc via the toolbox's rpc layer (RPC_<CHAIN> env,
+    // then a public rpc) and caches the client. It throws for unknown chains,
+    // which is fine here since proxy resolution is best-effort.
+    return getClient(chainId as keyof typeof ChainList);
   } catch {
     return undefined;
   }
@@ -269,16 +263,10 @@ async function migrateOne(
 export async function migrateVerification(
   params: MigrateVerificationParams,
 ): Promise<MigrateVerificationResult> {
+  // Explorer creds are passed in per endpoint (no `process.env` in this module,
+  // for browser safety); callers like the CLI read the env and thread them through.
+  const { from, to } = params;
   const log = params.onLog;
-  const from = {
-    ...params.from,
-    apiKey: params.from.apiKey ?? process.env.ETHERSCAN_API_KEY,
-    apiUrl: params.from.apiUrl ?? process.env.EXPLORER_PROXY,
-  };
-  const to = {
-    ...params.to,
-    apiKey: params.to.apiKey ?? process.env.ETHERSCAN_API_KEY,
-  };
 
   // The origin must actually have the source for the root address.
   let rootSource: Awaited<ReturnType<typeof getSourceCode>>;

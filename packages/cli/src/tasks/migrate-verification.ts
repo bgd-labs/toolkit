@@ -143,8 +143,19 @@ async function run(opts: {
         `\nMigrating: ${job.from.explorer ?? "auto"}@${job.from.chainId} ${job.from.address} → ${job.to.explorer}@${job.to.chainId} ${job.to.address}…`,
       );
     }
+    // Read explorer creds from the env here (node) and pass them in per
+    // endpoint; the toolbox stays free of process.env.
     const result = await migrateVerification({
       ...job,
+      from: {
+        ...job.from,
+        apiKey: job.from.apiKey ?? process.env.ETHERSCAN_API_KEY,
+        apiUrl: job.from.apiUrl ?? process.env.EXPLORER_PROXY,
+      },
+      to: {
+        ...job.to,
+        apiKey: job.to.apiKey ?? process.env.ETHERSCAN_API_KEY,
+      },
       onLog: verbose ? (m) => console.log(m) : undefined,
     });
     results.push(result);

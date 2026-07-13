@@ -136,10 +136,10 @@ importers:
         version: 4.46.0(viem@2.45.0(bufferutil@4.1.0)(typescript@5.8.3)(utf-8-validate@5.0.10)(zod@3.24.2))
       '@aave-dao/aave-delivery-infrastructure':
         specifier: github:aave-dao/aave-delivery-infrastructure
-        version: aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/50da00e2ef6de51464f6d83ae324cefec691aeb9
+        version: aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/e4e2500c58fa1eeaa3ffd8f352bdc55c576c1148
       '@aave-dao/aave-governance-v3':
         specifier: github:aave-dao/aave-governance-v3
-        version: aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/5b240b183705eaad048432816c43839f19d60e1b(bufferutil@4.1.0)(utf-8-validate@5.0.10)
+        version: aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/611b9e1f19d627d2bee2353aef097b8dba05dd35(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       '@aave-dao/aave-umbrella':
         specifier: 1.0.0
         version: 1.0.0
@@ -147,8 +147,8 @@ importers:
         specifier: 3.6.0
         version: 3.6.0
       '@bgd-labs/aave-price-feeds':
-        specifier: github:bgd-labs/aave-price-feeds
-        version: bgd-forge-template@git+https://git@github.com:bgd-labs/aave-price-feeds.git#85e6ca0298ed32b2d564eac1ad1e084f7573173a
+        specifier: github:aave-dao/aave-price-feeds
+        version: bgd-forge-template@https://codeload.github.com/aave-dao/aave-price-feeds/tar.gz/4e34b01274c394f083c27c53a8b4c15cc2e98153
       '@bgd-labs/solidity-utils':
         specifier: ^1.1.2
         version: 1.1.2
@@ -2593,12 +2593,12 @@ packages:
   '@vitest/utils@3.0.7':
     resolution: {integrity: sha512-xePVpCRfooFX3rANQjwoditoXgWb1MaFbzmGuPP59MK6i13mrnDw/yEIyJudLeW6/38mCNcwCiJIGmpDPibAIg==}
 
-  aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/50da00e2ef6de51464f6d83ae324cefec691aeb9:
-    resolution: {tarball: https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/50da00e2ef6de51464f6d83ae324cefec691aeb9}
+  aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/e4e2500c58fa1eeaa3ffd8f352bdc55c576c1148:
+    resolution: {tarball: https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/e4e2500c58fa1eeaa3ffd8f352bdc55c576c1148}
     version: 1.0.0
 
-  aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/5b240b183705eaad048432816c43839f19d60e1b:
-    resolution: {tarball: https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/5b240b183705eaad048432816c43839f19d60e1b}
+  aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/611b9e1f19d627d2bee2353aef097b8dba05dd35:
+    resolution: {tarball: https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/611b9e1f19d627d2bee2353aef097b8dba05dd35}
     version: 1.0.0
 
   abitype@1.2.3:
@@ -2742,8 +2742,8 @@ packages:
     resolution: {integrity: sha512-pbnl5XzGBdrFU/wT4jqmJVPn2B6UHPBOhzMQkY/SPUPB6QtUXtmBHBIwCbXJol93mOpGMnQyP/+BB19q04xj7g==}
     engines: {node: '>=4'}
 
-  bgd-forge-template@git+https://git@github.com:bgd-labs/aave-price-feeds.git#85e6ca0298ed32b2d564eac1ad1e084f7573173a:
-    resolution: {commit: 85e6ca0298ed32b2d564eac1ad1e084f7573173a, repo: git@github.com:bgd-labs/aave-price-feeds.git, type: git}
+  bgd-forge-template@https://codeload.github.com/aave-dao/aave-price-feeds/tar.gz/4e34b01274c394f083c27c53a8b4c15cc2e98153:
+    resolution: {tarball: https://codeload.github.com/aave-dao/aave-price-feeds/tar.gz/4e34b01274c394f083c27c53a8b4c15cc2e98153}
     version: 1.0.0
 
   bigint-crypto-utils@3.3.0:
@@ -8820,9 +8820,9 @@ snapshots:
       loupe: 3.1.3
       tinyrainbow: 2.0.0
 
-  aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/50da00e2ef6de51464f6d83ae324cefec691aeb9: {}
+  aave-delivery-infrastructure@https://codeload.github.com/aave-dao/aave-delivery-infrastructure/tar.gz/e4e2500c58fa1eeaa3ffd8f352bdc55c576c1148: {}
 
-  aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/5b240b183705eaad048432816c43839f19d60e1b(bufferutil@4.1.0)(utf-8-validate@5.0.10):
+  aave-governance-v3@https://codeload.github.com/aave-dao/aave-governance-v3/tar.gz/611b9e1f19d627d2bee2353aef097b8dba05dd35(bufferutil@4.1.0)(utf-8-validate@5.0.10):
     dependencies:
       alchemy-sdk: 2.12.0(bufferutil@4.1.0)(utf-8-validate@5.0.10)
       dotenv: 16.4.7
@@ -8963,7 +8963,7 @@ snapshots:
     dependencies:
       is-windows: 1.0.2
 
-  bgd-forge-template@git+https://git@github.com:bgd-labs/aave-price-feeds.git#85e6ca0298ed32b2d564eac1ad1e084f7573173a: {}
+  bgd-forge-template@https://codeload.github.com/aave-dao/aave-price-feeds/tar.gz/4e34b01274c394f083c27c53a8b4c15cc2e98153: {}
 
   bigint-crypto-utils@3.3.0: {}
 

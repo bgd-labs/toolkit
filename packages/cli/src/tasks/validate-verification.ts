@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Command, Option } from "@commander-js/extra-typings";
 import { Address } from "viem";
+import { getClient } from "@bgd-labs/toolbox";
 import {
   expandValidateConfig,
   validateVerification,
@@ -8,6 +9,16 @@ import {
   type ValidateVerificationParams,
   type ValidateVerificationResult,
 } from "@bgd-labs/toolbox/verification";
+
+/** Build a viem client from the environment's provider keys (node-only). */
+const envClient = (chainId: number) =>
+  getClient(chainId as Parameters<typeof getClient>[0], {
+    providerConfig: {
+      alchemyKey: process.env.ALCHEMY_API_KEY,
+      quicknodeToken: process.env.QUICKNODE_TOKEN,
+      quicknodeEndpointName: process.env.QUICKNODE_ENDPOINT_NAME,
+    },
+  });
 
 function printResult(result: ValidateVerificationResult) {
   // `null` means different things by context: for runtime it is a real "no
@@ -96,7 +107,14 @@ async function run(opts: {
   const results: ValidateVerificationResult[] = [];
   for (const job of jobs) {
     if (verbose) console.log(`\nValidating ${job.address} on chain ${job.chainId}…`);
-    const result = await validateVerification(job);
+    // Read provider/explorer creds from the env here (node) and pass them in;
+    // the toolbox stays free of process.env.
+    const result = await validateVerification({
+      ...job,
+      apiKey: job.apiKey ?? process.env.ETHERSCAN_API_KEY,
+      apiUrl: job.apiUrl ?? process.env.EXPLORER_PROXY,
+      client: envClient(job.chainId),
+    });
     results.push(result);
     if (verbose) printResult(result);
   }

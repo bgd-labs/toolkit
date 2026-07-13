@@ -9,7 +9,7 @@ import {
   decode,
   type SolidityDecodedObject,
 } from "@ethereum-sourcify/bytecode-utils";
-import { type Address } from "viem";
+import { type Address, type Client } from "viem";
 import { getCode } from "viem/actions";
 import { getSourceCode, type ExplorerName } from "../ecosystem/explorers";
 import { ChainList } from "../ecosystem/chainIds";
@@ -31,6 +31,12 @@ export type ValidateVerificationParams = {
    * and other chains use the prioritized explorer.
    */
   explorer?: ExplorerName;
+  /**
+   * viem client used for the on-chain reads (bytecode + EIP-1967 slot). Pass an
+   * initialized client to keep provider keys out of this (browser-safe) module;
+   * falls back to the toolbox's {@link getClient} when omitted.
+   */
+  client?: Client;
 };
 
 export type ValidateVerificationResult = {
@@ -68,21 +74,12 @@ export type ValidateVerificationResult = {
 export async function validateVerification(
   params: ValidateVerificationParams,
 ): Promise<ValidateVerificationResult> {
-  const { chainId, address, explorer } = params;
-  // The explorer api key / proxy url default from the env so callers (and the
-  // CLI) don't have to thread them through.
-  const apiKey = params.apiKey ?? process.env.ETHERSCAN_API_KEY;
-  const apiUrl = params.apiUrl ?? process.env.EXPLORER_PROXY;
-  // Resolve the rpc + client via the toolbox's getClient, which reads provider
-  // keys from the env (RPC_<CHAIN> / ALCHEMY_API_KEY / QUICKNODE_*, then a public
-  // rpc). lib-sourcify needs the url string too, so we read it off the transport.
-  const client = getClient(chainId as keyof typeof ChainList, {
-    providerConfig: {
-      alchemyKey: process.env.ALCHEMY_API_KEY,
-      quicknodeToken: process.env.QUICKNODE_TOKEN,
-      quicknodeEndpointName: process.env.QUICKNODE_ENDPOINT_NAME,
-    },
-  });
+  const { chainId, address, explorer, apiKey, apiUrl } = params;
+  // Creds + client are passed in (no `process.env` in this module, for browser
+  // safety) — callers like the CLI read the env and thread them through. When no
+  // client is supplied we fall back to the toolbox's getClient. lib-sourcify
+  // needs the rpc url string too, so we read it off the transport.
+  const client = params.client ?? getClient(chainId as keyof typeof ChainList);
   const rpcUrl = (client.transport as { url?: string }).url;
   if (!rpcUrl) {
     throw new Error(
