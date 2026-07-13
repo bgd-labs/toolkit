@@ -8,6 +8,8 @@ import { registerStorageDiff } from "./tasks/storage-diff";
 import { registerRpcs } from "./tasks/rpcs";
 import { registerProtocol } from "./tasks/protocol";
 import { registerSeatbeltReport } from "./tasks/seatbelt-report.js";
+import { registerValidateVerification } from "./tasks/validate-verification.js";
+import { registerMigrateVerification } from "./tasks/migrate-verification.js";
 
 const program = new Command();
 
@@ -23,5 +25,7 @@ registerStorageDiff(program);
 registerRpcs(program);
 registerProtocol(program);
 registerSeatbeltReport(program);
+registerValidateVerification(program);
+registerMigrateVerification(program);
 
 program.parse();

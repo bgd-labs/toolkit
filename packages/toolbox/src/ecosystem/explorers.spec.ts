@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   getExplorer,
   getSourceCode,
+  isVerified,
   parseEtherscanStyleSourceCode,
 } from "./explorers";
 import { mock_getSourceCode } from "./mocks/getSourceCode";
@@ -43,6 +44,47 @@ describe("ecosystem:explorers", () => {
         address: "0xEB0682d148e874553008730f0686ea89db7DA412",
       });
       expect(response).toMatchSnapshot();
+    },
+  );
+
+  it.skipIf(process.env.CI)(
+    "getSourceCode downloads a contract from sourcify (DAI on mainnet)",
+    async () => {
+      const response = (await getSourceCode({
+        chainId: 1,
+        address: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
+        explorer: "sourcify",
+      })) as {
+        ContractName: string;
+        CompilerVersion: string;
+        SourceCode: string;
+      };
+      // sourcify returns the standard-json input stringified into SourceCode
+      expect(response.ContractName).toEqual("Dai");
+      expect(response.CompilerVersion).toMatch(/^0\.5\.12/);
+      expect(response.SourceCode.startsWith("{")).toBe(true);
+    },
+  );
+
+  it.skipIf(process.env.CI)(
+    "isVerified is true for a verified contract and false otherwise",
+    async () => {
+      // Aave V3 Pool proxy — verified on etherscan.
+      expect(
+        await isVerified({
+          chainId: 1,
+          address: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2",
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        }),
+      ).toBe(true);
+      // An address with no contract / no verified source.
+      expect(
+        await isVerified({
+          chainId: 1,
+          address: "0x000000000000000000000000000000000000dEaD",
+          apiKey: process.env.ETHERSCAN_API_KEY,
+        }),
+      ).toBe(false);
     },
   );
 
